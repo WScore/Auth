@@ -16,9 +16,9 @@ class RememberMe
     /**
      * @param array $cookie
      */
-    public function __construct( &$cookie=array() )
+    public function __construct(&$cookie = array())
     {
-        if( $cookie ) {
+        if ($cookie) {
             $this->cookie = &$cookie;
         } else {
             $this->cookie = &$_COOKIE;
@@ -28,7 +28,7 @@ class RememberMe
     /**
      * @param null|string $setter
      */
-    public function setSetCookie( $setter=null )
+    public function setSetCookie($setter = null)
     {
         $this->setCookie = $setter;
     }
@@ -38,7 +38,7 @@ class RememberMe
      */
     public function getId()
     {
-        return $this->get( $this->name_id );
+        return $this->get($this->name_id);
     }
 
     /**
@@ -46,28 +46,28 @@ class RememberMe
      */
     public function getToken()
     {
-        return $this->get( $this->token_id );
+        return $this->get($this->token_id);
     }
 
     /**
      * @param string $id
      * @param string $token
      */
-    public function set( $id, $token )
+    public function set($id, $token)
     {
         $time = time() + 60 * 60 * 24 * $this->rememberDays;
         $func = $this->setCookie;
-        $func( $this->name_id,  $id,    $time, '/', true );
-        $func( $this->token_id, $token, $time, '/', true );
+        $func($this->name_id, $id, $time, '/', true);
+        $func($this->token_id, $token, $time, '/', true);
     }
 
     /**
      * @param string $name
      * @return null|string
      */
-    protected function get( $name )
+    protected function get($name)
     {
-        return array_key_exists( $name, $this->cookie ) ? $this->cookie[$name] : null;
+        return array_key_exists($name, $this->cookie) ? $this->cookie[$name] : null;
     }
 }
 

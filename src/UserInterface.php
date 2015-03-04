@@ -33,7 +33,7 @@ interface UserInterface
      * @param string $token
      * @return bool
      */
-    public function verifyRemember( $token );
+    public function verifyRemember($token);
 
     /**
      * returns remember token. tokens maybe newly generated one
