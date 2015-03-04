@@ -1,0 +1,20 @@
+{
+    "name": "wscore/auth",
+    "description": "a simple authenticate package.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Asao",
+            "email": "kamei@workspot.jp"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+
+    },
+    "autoload": {
+        "psr-4": {
+            "WScore\\Auth\\": "src/"
+        }
+    }
+}
