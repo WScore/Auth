@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: asao
- * Date: 15/03/05
- * Time: 2:23
- */
 namespace WScore\Auth;
 
 interface RememberMeInterface
@@ -19,14 +13,15 @@ interface RememberMeInterface
     public function verifyRemember($id, $token);
 
     /**
-     * returns remember token. tokens maybe newly generated one
-     * if this is the first time to remember, or return the
-     * existing token saved from previous session.
+     * returns remember token.
      *
-     * set false not to use remember-me.
+     * a new token will be generated if $token is null. 
+     * otherwise, original $token *maybe* reused or a new 
+     * token maybe generated. 
      *
-     * @param string $id
+     * @param string      $id
+     * @param string|null $token
      * @return bool|string
      */
-    public function rememberMe($id);
+    public function rememberMe($id, $token);
 }

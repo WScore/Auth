@@ -150,7 +150,7 @@ class Auth
         }
         $this->saveOk($id, self::BY_POST);
         if ($remember) {
-            $this->rememberMe($id);
+            $this->rememberMe($id, null);
         }
         return true;
     }
@@ -205,7 +205,7 @@ class Auth
         }
 
         $this->saveOk($id, self::BY_REMEMBER);
-        $this->rememberMe($id);
+        $this->rememberMe($id, $token);
         return true;
     }
 
@@ -265,14 +265,15 @@ class Auth
     }
 
     /**
-     * @param $id
+     * @param string $id
+     * @param string $token
      */
-    private function rememberMe($id)
+    private function rememberMe($id, $token)
     {
         if (!$this->rememberMe) {
             return;
         }
-        if ($token = $this->rememberMe->rememberMe($id)) {
+        if ($token = $this->rememberMe->rememberMe($id, $token)) {
             $this->rememberCookie->save($id, $token);
         }
     }
