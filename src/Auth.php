@@ -48,9 +48,21 @@ class Auth
     //  get the state of the auth
     // +----------------------------------------------------------------------+
     /**
-     * @param array $session
+     * @param UserInterface $user
+     * @param RememberMe    $remember
      */
-    public function __construct(&$session = null)
+    public function __construct($user, $remember = null)
+    {
+        $this->rememberMe = $remember;
+        $this->user       = $user;
+        $this->status     = self::AUTH_NONE;
+        $this->loginInfo  = array();
+    }
+    
+    /**
+     * @param null $session
+     */
+    public function setSession(&$session = null)
     {
         if (is_null($session)) {
             $this->session = &$_SESSION;
@@ -58,25 +70,7 @@ class Auth
             $this->session = &$session;
         }
     }
-
-    /**
-     * @param RememberMe $remember
-     */
-    public function setRememberMe($remember)
-    {
-        $this->rememberMe = $remember;
-    }
-
-    /**
-     * @param UserInterface $user
-     */
-    public function setUser($user)
-    {
-        $this->user      = $user;
-        $this->status    = self::AUTH_NONE;
-        $this->loginInfo = array();
-    }
-
+    
     /**
      * @return bool
      */
@@ -128,6 +122,8 @@ class Auth
     //  authorization
     // +----------------------------------------------------------------------+
     /**
+     * login with id and pw to be validated with userInterface.
+     * 
      * @param string $id
      * @param string $pw
      * @param bool   $remember
@@ -137,17 +133,33 @@ class Auth
     {
         if (!$this->user->verifyUserId($id)) {
             $this->status = self::AUTH_FAILED;
-            return $this->isLogin();
+            return false;
         }
         if (!$this->user->verifyUserPw($pw)) {
             $this->status = self::AUTH_FAILED;
-            return $this->isLogin();
+            return false;
         }
         $this->saveOk($id, self::BY_POST);
         if ($remember) {
             $this->rememberMe($id);
         }
-        return $this->isLogin();
+        return true;
+    }
+
+    /**
+     * checks if already logged in via session or remember-me.
+     * 
+     * @return bool
+     */    
+    public function isLoggedIn()
+    {
+        if ($this->isSaved()) {
+            return true;
+        }
+        if ($this->isRemembered()) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -157,15 +169,15 @@ class Auth
     public function forceLogin($id)
     {
         if ($this->user->verifyUserId($id)) {
-            $this->saveOk($id, self::BY_FORCED);
+            return $this->saveOk($id, self::BY_FORCED);
         }
-        return $this->isLogin();
+        return false;
     }
 
     /**
      * @return bool
      */
-    public function getRemember()
+    public function isRemembered()
     {
         if (!$this->rememberMe) {
             return false;
@@ -183,14 +195,15 @@ class Auth
         if ($this->user->verifyRemember($token)) {
             $this->saveOk($id, self::BY_REMEMBER);
             $this->rememberMe($id);
+            return true;
         }
-        return $this->isLogin();
+        return false;
     }
 
     /**
      * @return bool
      */
-    public function isLoggedIn()
+    public function isSaved()
     {
         $saveId = $this->getSaveId();
         if (!isset($this->session[$saveId])) {
@@ -204,10 +217,9 @@ class Auth
         }
         $id = $this->session[$saveId]['id'];
         if ($this->user->verifyUserId($id)) {
-            $this->loginInfo = $this->session[$saveId];
-            $this->status    = self::AUTH_OK;
+            return $this->saveOk($id, $this->session[$saveId]['by']);
         }
-        return $this->isLogin();
+        return false;
     }
 
     // +----------------------------------------------------------------------+
@@ -226,7 +238,9 @@ class Auth
     }
 
     /**
-     *
+     * @param        $id
+     * @param string $by
+     * @return bool
      */
     protected function saveOk($id, $by = self::BY_POST)
     {
@@ -240,6 +254,7 @@ class Auth
         $this->loginInfo        = $save;
         $saveId                 = $this->getSaveId();
         $this->session[$saveId] = $save;
+        return true;
     }
 
     /**
