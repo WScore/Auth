@@ -9,7 +9,7 @@ interface UserInterface
      *
      * @return string
      */
-    public function getUserTypeId();
+    public function getUserType();
 
     /**
      * verifies if $id is valid user's ID.
@@ -26,23 +26,4 @@ interface UserInterface
      * @return bool
      */
     public function verifyUserPw($pw);
-
-    /**
-     * verifies if the remember token is valid for the user.
-     *
-     * @param string $token
-     * @return bool
-     */
-    public function verifyRemember($token);
-
-    /**
-     * returns remember token. tokens maybe newly generated one
-     * if this is the first time to remember, or return the
-     * existing token saved from previous session.
-     *
-     * set false not to use remember-me.
-     *
-     * @return bool|string
-     */
-    public function getRememberToken();
 }

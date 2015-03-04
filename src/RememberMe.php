@@ -3,71 +3,32 @@ namespace WScore\Auth;
 
 class RememberMe
 {
-    protected $name_id = 'remember-id';
-
-    protected $token_id = 'remember-me';
-
-    protected $cookie = array();
-
-    protected $rememberDays = 7;
-
-    protected $setCookie = 'setcookie';
 
     /**
-     * @param array $cookie
-     */
-    public function __construct(&$cookie = array())
-    {
-        if ($cookie) {
-            $this->cookie = &$cookie;
-        } else {
-            $this->cookie = &$_COOKIE;
-        }
-    }
-
-    /**
-     * @param null|string $setter
-     */
-    public function setSetCookie($setter = null)
-    {
-        $this->setCookie = $setter;
-    }
-
-    /**
-     * @return null|string
-     */
-    public function getId()
-    {
-        return $this->get($this->name_id);
-    }
-
-    /**
-     * @return null|string
-     */
-    public function getToken()
-    {
-        return $this->get($this->token_id);
-    }
-
-    /**
+     * verifies if the $id and token are in remembrance.
+     *
      * @param string $id
      * @param string $token
+     * @return bool
      */
-    public function set($id, $token)
+    public function verifyRemember($id, $token)
     {
-        $time = time() + 60 * 60 * 24 * $this->rememberDays;
-        $func = $this->setCookie;
-        $func($this->name_id, $id, $time, '/', true);
-        $func($this->token_id, $token, $time, '/', true);
+        return true;
     }
 
     /**
-     * @param string $name
-     * @return null|string
+     * returns remember token. tokens maybe newly generated one
+     * if this is the first time to remember, or return the
+     * existing token saved from previous session.
+     *
+     * set false not to use remember-me.
+     *
+     * @param string $id
+     * @return bool|string
      */
-    protected function get($name)
+    public function rememberMe($id)
     {
-        return array_key_exists($name, $this->cookie) ? $this->cookie[$name] : null;
+        return true;
     }
 }
 

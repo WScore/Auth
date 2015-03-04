@@ -44,6 +44,11 @@ class Auth
      */
     protected $rememberMe;
 
+    /**
+     * @var RememberCookie
+     */
+    private $rememberCookie;
+
     // +----------------------------------------------------------------------+
     //  get the state of the auth
     // +----------------------------------------------------------------------+
@@ -53,10 +58,13 @@ class Auth
      */
     public function __construct($user, $remember = null)
     {
-        $this->rememberMe = $remember;
         $this->user       = $user;
         $this->status     = self::AUTH_NONE;
         $this->loginInfo  = array();
+        if($remember) {
+            $this->rememberMe = $remember;
+            $this->rememberCookie = new RememberCookie();
+        }
     }
     
     /**
@@ -153,10 +161,10 @@ class Auth
      */    
     public function isLoggedIn()
     {
-        if ($this->isSaved()) {
+        if ($this->checkSession()) {
             return true;
         }
-        if ($this->isRemembered()) {
+        if ($this->checkRemembered()) {
             return true;
         }
         return false;
@@ -177,42 +185,42 @@ class Auth
     /**
      * @return bool
      */
-    public function isRemembered()
+    private function checkRemembered()
     {
         if (!$this->rememberMe) {
             return false;
         }
-        if (!$id = $this->rememberMe->getId()) {
+        if (!$id = $this->rememberCookie->retrieveId()) {
             return false;
         }
-        if (!$token = $this->rememberMe->getToken()) {
+        if (!$token = $this->rememberCookie->retrieveToken()) {
+            return false;
+        }
+        if (!$this->rememberMe->verifyRemember($id, $token)) {
             return false;
         }
         if (!$this->user->verifyUserId($id)) {
             return false;
         }
 
-        if ($this->user->verifyRemember($token)) {
-            $this->saveOk($id, self::BY_REMEMBER);
-            $this->rememberMe($id);
-            return true;
-        }
-        return false;
+        $this->saveOk($id, self::BY_REMEMBER);
+        $this->rememberMe($id);
+        return true;
     }
 
     /**
      * @return bool
      */
-    public function isSaved()
+    private function checkSession()
     {
         $saveId = $this->getSaveId();
         if (!isset($this->session[$saveId])) {
             return false;
         }
-        if (!isset($this->session[$saveId]['user'])) {
+        if (!isset($this->session[$saveId]['type'])) {
             return false;
         }
-        if ($this->session[$saveId]['user'] !== $this->user->getUserTypeId()) {
+        if ($this->session[$saveId]['type'] !== $this->user->getUserType()) {
             return false;
         }
         $id = $this->session[$saveId]['id'];
@@ -249,7 +257,7 @@ class Auth
             'id'   => $id,
             'time' => date('Y-m-d H:i:s'),
             'by'   => $by,
-            'user' => $this->user->getUserTypeId(),
+            'type' => $this->user->getUserType(),
         ];
         $this->loginInfo        = $save;
         $saveId                 = $this->getSaveId();
@@ -265,8 +273,8 @@ class Auth
         if (!$this->rememberMe) {
             return;
         }
-        if ($token = $this->user->getRememberToken()) {
-            $this->rememberMe->set($id, $token);
+        if ($token = $this->rememberMe->rememberMe($id)) {
+            $this->rememberCookie->save($id, $token);
         }
     }
 
