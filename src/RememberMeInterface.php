@@ -1,9 +1,14 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: asao
+ * Date: 15/03/05
+ * Time: 2:23
+ */
 namespace WScore\Auth;
 
-class RememberMe implements RememberMeInterface
+interface RememberMeInterface
 {
-
     /**
      * verifies if the $id and token are in remembrance.
      *
@@ -11,10 +16,7 @@ class RememberMe implements RememberMeInterface
      * @param string $token
      * @return bool
      */
-    public function verifyRemember($id, $token)
-    {
-        return true;
-    }
+    public function verifyRemember($id, $token);
 
     /**
      * returns remember token. tokens maybe newly generated one
@@ -26,9 +28,5 @@ class RememberMe implements RememberMeInterface
      * @param string $id
      * @return bool|string
      */
-    public function rememberMe($id)
-    {
-        return true;
-    }
+    public function rememberMe($id);
 }
-

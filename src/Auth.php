@@ -15,34 +15,27 @@ class Auth
     /**
      * @var int
      */
-    protected $status = self::AUTH_NONE;
-
-    /**
-     * name of session to save this auth state.
-     *
-     * @var string
-     */
-    protected $saveId;
+    private $status = self::AUTH_NONE;
 
     /**
      * @var array
      */
-    protected $loginInfo = array();
+    private $loginInfo = array();
 
     /**
      * @var UserInterface
      */
-    protected $user;
+    private $user;
 
     /**
      * @var array
      */
-    protected $session = array();
+    private $session = array();
 
     /**
-     * @var RememberMe
+     * @var RememberMeInterface
      */
-    protected $rememberMe;
+    private $rememberMe;
 
     /**
      * @var RememberCookie
@@ -53,8 +46,8 @@ class Auth
     //  get the state of the auth
     // +----------------------------------------------------------------------+
     /**
-     * @param UserInterface $user
-     * @param RememberMe    $remember
+     * @param UserInterface        $user
+     * @param RememberMeInterface  $remember
      */
     public function __construct($user, $remember = null)
     {
@@ -105,6 +98,14 @@ class Auth
     public function getUser()
     {
         return $this->user;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUserInfo()
+    {
+        return $this->loginInfo['user'];
     }
 
     /**
@@ -236,13 +237,10 @@ class Auth
     /**
      * @return mixed
      */
-    protected function getSaveId()
+    private function getSaveId()
     {
-        if ($this->saveId) {
-            return $this->saveId;
-        }
-        $class = get_called_class();
-        return str_replace('\\', '-', $class);
+        $class = get_class($this->user);
+        return 'auth-'.str_replace('\\', '-', $class);
     }
 
     /**
@@ -250,7 +248,7 @@ class Auth
      * @param string $by
      * @return bool
      */
-    protected function saveOk($id, $by = self::BY_POST)
+    private function saveOk($id, $by = self::BY_POST)
     {
         $this->status           = self::AUTH_OK;
         $save                   = [
@@ -258,6 +256,7 @@ class Auth
             'time' => date('Y-m-d H:i:s'),
             'by'   => $by,
             'type' => $this->user->getUserType(),
+            'user' => $this->user->getUserInfo($id),
         ];
         $this->loginInfo        = $save;
         $saveId                 = $this->getSaveId();
@@ -268,7 +267,7 @@ class Auth
     /**
      * @param $id
      */
-    protected function rememberMe($id)
+    private function rememberMe($id)
     {
         if (!$this->rememberMe) {
             return;

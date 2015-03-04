@@ -26,4 +26,12 @@ interface UserInterface
      * @return bool
      */
     public function verifyUserPw($pw);
+
+    /**
+     * get the user information.
+     * 
+     * @param string $id
+     * @return mixed
+     */
+    public function getUserInfo($id);
 }
