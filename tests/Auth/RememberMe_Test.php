@@ -78,7 +78,7 @@ class RememberMe_Test extends \PHPUnit_Framework_TestCase
         $this->assertEquals('tests\Auth\mocks\RememberMock', get_class($this->rememberMe));
         $this->assertEquals('WScore\Auth\Auth', get_class($this->auth));
         $this->assertEquals('WScore\Auth\RememberCookie', get_class($this->cookie));
-        $this->assertEquals('tests\Auth\mocks\SimpleUserList', get_class($this->auth->getUser()));
+        $this->assertEquals('tests\Auth\mocks\SimpleUserList', get_class($this->auth->getUserProvider()));
     }
 
     /**
@@ -125,6 +125,7 @@ class RememberMe_Test extends \PHPUnit_Framework_TestCase
         $this->assertNotEmpty($loginInfo);
         $this->assertEquals('remember', $loginInfo['id']);
         $this->assertArrayHasKey('time', $loginInfo);
+        $this->assertTrue($this->auth->isLoginBy(Auth::BY_REMEMBER));
         $this->assertEquals(Auth::BY_REMEMBER, $loginInfo['by']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
         $this->assertEquals('remember-PW', $loginInfo['user']);

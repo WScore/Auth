@@ -96,17 +96,25 @@ class Auth
     /**
      * @return UserInterface
      */
-    public function getUser()
+    public function getUserProvider()
     {
         return $this->user;
     }
 
     /**
-     * @return mixed
+     * @return array
+     */
+    public function getUserId()
+    {
+        return $this->getLoginKey('id');
+    }
+
+    /**
+     * @return array
      */
     public function getUserInfo()
     {
-        return $this->loginInfo['user'];
+        return $this->getLoginKey('user');
     }
 
     /**
@@ -118,11 +126,25 @@ class Auth
     }
 
     /**
+     * @param string $key
+     * @return null|mixed
+     */
+    public function getLoginKey($key)
+    {
+        if(!$this->loginInfo) {
+            return null;
+        }
+        return array_key_exists($key, $this->loginInfo) ? $this->loginInfo[$key] : null;
+    }
+
+    /**
      * logout if logged in.
      */
     public function logout()
     {
         $saveId = $this->getSaveId();
+        $this->status = self::AUTH_NONE;
+        $this->loginInfo  = array();
         if (isset($this->session[$saveId])) {
             unset($this->session[$saveId]);
         }

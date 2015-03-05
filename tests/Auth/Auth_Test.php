@@ -21,26 +21,26 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
     var $auth;
 
     var $session = array();
-    
+
     var $user_save_id;
 
     function setup()
     {
-        $this->idList = array(
+        $this->idList       = array(
             'test' => 'test-PW',
             'more' => 'more-PW',
         );
-        $this->user = new SimpleUserList( $this->idList );
-        $this->user_save_id = 'auth-'.str_replace('\\', '-', get_class($this->user));
-        $this->auth = new Auth($this->user);
+        $this->user         = new SimpleUserList($this->idList);
+        $this->user_save_id = 'auth-' . str_replace('\\', '-', get_class($this->user));
+        $this->auth         = new Auth($this->user);
         $this->auth->setSession($this->session);
     }
 
     function test0()
     {
-        $this->assertEquals( 'tests\Auth\mocks\SimpleUserList', get_class($this->user) );
-        $this->assertEquals( 'WScore\Auth\Auth', get_class($this->auth) );
-        $this->assertEquals( 'tests\Auth\mocks\SimpleUserList', get_class($this->auth->getUser() ) );
+        $this->assertEquals('tests\Auth\mocks\SimpleUserList', get_class($this->user));
+        $this->assertEquals('WScore\Auth\Auth', get_class($this->auth));
+        $this->assertEquals('tests\Auth\mocks\SimpleUserList', get_class($this->auth->getUserProvider()));
     }
 
     // +----------------------------------------------------------------------+
@@ -53,11 +53,17 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
         $authOK = $this->auth->login('test', 'test-PW');
 
         // test auth status
-        $this->assertEquals( true, $authOK );
-        $this->assertEquals( true, $this->auth->isLogin() );
+        $this->assertEquals(true, $authOK);
+        $this->assertEquals(true, $this->auth->isLogin());
 
         // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
+        
+        // test
+        $this->assertTrue($this->auth->isLoginBy(Auth::BY_POST));
+        $this->assertEquals('test', $this->auth->getUserId());
+
+        // directly test the session data.
         $this->assertNotEmpty($loginInfo);
         $this->assertEquals('test', $loginInfo['id']);
         $this->assertArrayHasKey('time', $loginInfo);
@@ -67,7 +73,7 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
 
         // test what's saved in the session.
         $this->assertNotEmpty($this->session);
-        $this->assertArrayHasKey( $this->user_save_id, $this->session );
+        $this->assertArrayHasKey($this->user_save_id, $this->session);
         $saved = $this->session[$this->user_save_id];
         $this->assertEquals('test', $saved['id']);
         $this->assertArrayHasKey('time', $saved);
@@ -84,8 +90,8 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
         $authOK = $this->auth->login('test', 'test-PW', true);
 
         // test auth status
-        $this->assertEquals( true, $authOK );
-        $this->assertEquals( true, $this->auth->isLogin() );
+        $this->assertEquals(true, $authOK);
+        $this->assertEquals(true, $this->auth->isLogin());
 
         // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
@@ -98,7 +104,7 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
 
         // test what's saved in the session.
         $this->assertNotEmpty($this->session);
-        $this->assertArrayHasKey( $this->user_save_id, $this->session );
+        $this->assertArrayHasKey($this->user_save_id, $this->session);
         $saved = $this->session[$this->user_save_id];
         $this->assertEquals('test', $saved['id']);
         $this->assertArrayHasKey('time', $saved);
@@ -115,8 +121,8 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
         $authOK = $this->auth->login('bad', 'bad-PW');
 
         // test auth status
-        $this->assertEquals( false, $authOK );
-        $this->assertEquals( false, $this->auth->isLogin() );
+        $this->assertEquals(false, $authOK);
+        $this->assertEquals(false, $this->auth->isLogin());
 
         // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
@@ -131,11 +137,11 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
      */
     function login_fails_for_bad_pw()
     {
-        $authOK = $this->auth->login( 'test', 'bad-PW' );
+        $authOK = $this->auth->login('test', 'bad-PW');
 
         // test auth status
-        $this->assertEquals( false, $authOK );
-        $this->assertEquals( false, $this->auth->isLogin() );
+        $this->assertEquals(false, $authOK);
+        $this->assertEquals(false, $this->auth->isLogin());
 
         // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
@@ -158,15 +164,15 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
         $session = [
             $this->user_save_id => $loginInfo,
         ];
-        $auth = new Auth($this->user);
+        $auth    = new Auth($this->user);
         $auth->setSession($session);
 
         // OK. now let's login without input.
         $authOK = $auth->isLoggedIn();
 
         // test auth status
-        $this->assertEquals( true, $authOK );
-        $this->assertEquals( true, $auth->isLogin() );
+        $this->assertEquals(true, $authOK);
+        $this->assertEquals(true, $auth->isLogin());
 
 
         // get loginInfo
@@ -187,8 +193,8 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
     {
         $authOK = $this->auth->forceLogin('test');
         // test auth status
-        $this->assertEquals( true, $authOK );
-        $this->assertEquals( true, $this->auth->isLogin() );
+        $this->assertEquals(true, $authOK);
+        $this->assertEquals(true, $this->auth->isLogin());
 
 
         // get loginInfo
@@ -208,9 +214,26 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
     {
         $authOK = $this->auth->forceLogin('bad');
         // test auth status
-        $this->assertEquals( false, $authOK );
-        $this->assertEquals( false, $this->auth->isLogin() );
+        $this->assertEquals(false, $authOK);
+        $this->assertEquals(false, $this->auth->isLogin());
         $loginInfo = $this->auth->getLoginInfo();
         $this->assertEmpty($loginInfo);
+    }
+
+    /**
+     * @test
+     */
+    function logout_()
+    {
+        $authOK = $this->auth->login('test', 'test-PW');
+
+        // test auth status
+        $this->assertEquals(true, $authOK);
+        $this->assertEquals(true, $this->auth->isLogin());
+
+        $this->auth->logout();
+        $this->assertEquals(false, $this->auth->isLogin());
+        $this->assertEmpty($this->auth->getLoginInfo());
+        $this->assertEmpty($this->auth->getUserInfo());
     }
 }
