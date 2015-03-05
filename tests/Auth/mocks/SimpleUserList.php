@@ -2,7 +2,6 @@
 namespace tests\Auth\mocks;
 
 use WScore\Auth\UserAdaptor\UserList;
-use WScore\Auth\UserInterface;
 
 class SimpleUserList extends UserList
 {
