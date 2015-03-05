@@ -1,6 +1,7 @@
 <?php
 namespace tests\Auth;
 
+use ArrayObject;
 use tests\Auth\mocks\RememberMock;
 use tests\Auth\mocks\SimpleUserList;
 use WScore\Auth\Auth;
@@ -37,26 +38,29 @@ class RememberMe_Test extends \PHPUnit_Framework_TestCase
     var $rememberMe;
 
     /**
-     * @var array
+     * @var RememberCookie
      */
     var $cookie = [];
-    
+
+    var $cookie_data = [];
+
     var $cookie_saved = [];
 
     function setup()
     {
-        $this->idList       = array(
+        $this->idList       = new ArrayObject([
             'test' => 'test-PW',
             'more' => 'more-PW',
-        );
+        ]);
         $this->remembered = array(
             'remember' => 'its-me',
         );
         $this->user         = new SimpleUserList($this->idList);
         $this->user_save_id = 'auth-' . str_replace('\\', '-', get_class($this->user));
         
-        $this->rememberMe   = new RememberMock();
-        $this->cookie       = new RememberCookie($this->cookie);
+        $this->rememberMe   = new RememberMock($this->remembered);
+        $this->cookie_data  = new ArrayObject();
+        $this->cookie       = new RememberCookie($this->cookie_data);
         $this->cookie->setSetCookie([$this, 'setCookie']);
         
         $this->auth         = new Auth($this->user, $this->rememberMe, $this->cookie);
@@ -103,4 +107,78 @@ class RememberMe_Test extends \PHPUnit_Framework_TestCase
         $this->assertEquals('token-test', $savedCookie['value']);
     }
 
-}
+    /**
+     * @test
+     */
+    function isLoggedIn_using_remembered_data_successful()
+    {
+        $this->cookie_data['remember-id'] = 'remember';
+        $this->cookie_data['remember-me'] = 'its-me';
+        $this->idList['remember'] = 'remember-PW'; // different from token!
+        $authOK = $this->auth->isLoggedIn();
+        // test auth status
+        $this->assertEquals( true, $authOK );
+        $this->assertEquals( true, $this->auth->isLogin() );
+
+        // get loginInfo
+        $loginInfo = $this->auth->getLoginInfo();
+        $this->assertNotEmpty($loginInfo);
+        $this->assertEquals('remember', $loginInfo['id']);
+        $this->assertArrayHasKey('time', $loginInfo);
+        $this->assertEquals(Auth::BY_REMEMBER, $loginInfo['by']);
+        $this->assertEquals('SimpleUserList', $loginInfo['type']);
+        $this->assertEquals('remember-PW', $loginInfo['user']);
+    }
+
+    /**
+     * @test
+     */
+    function isLoggedIn_with_bad_id_fails()
+    {
+        $this->cookie_data['remember-id'] = 'no-remember';
+        $this->cookie_data['remember-me'] = 'its-me';
+        $this->idList['remember'] = 'remember-PW'; // different from token!
+        $this->assertEquals( false, $this->auth->isLoggedIn() );
+    }
+
+    /**
+     * @test
+     */
+    function isLoggedIn_with_bad_pw_fails()
+    {
+        $this->cookie_data['remember-id'] = 'remember';
+        $this->cookie_data['remember-me'] = 'its-not-me';
+        $this->idList['remember'] = 'remember-PW'; // different from token!
+        $this->assertEquals( false, $this->auth->isLoggedIn() );
+    }
+
+    /**
+     * @test
+     */
+    function isLoggedIn_without_id_in_cookie_fails()
+    {
+        $this->cookie_data['remember-me'] = 'its-me';
+        $this->idList['remember'] = 'remember-PW'; // different from token!
+        $this->assertEquals( false, $this->auth->isLoggedIn() );
+    }
+    
+    /**
+     * @test
+     */
+    function isLoggedIn_without_pw_in_cookie_fails()
+    {
+        $this->cookie_data['remember-id'] = 'remember';
+        $this->idList['remember'] = 'remember-PW'; // different from token!
+        $this->assertEquals( false, $this->auth->isLoggedIn() );
+    }
+
+    /**
+     * @test
+     */
+    function isLoggedIn_without_user_data_fails()
+    {
+        $this->cookie_data['remember-id'] = 'remember';
+        $this->cookie_data['remember-me'] = 'its-me';
+        $this->idList['no-remember'] = 'remember-PW'; // different from token!
+        $this->assertEquals( false, $this->auth->isLoggedIn() );
+    }}
