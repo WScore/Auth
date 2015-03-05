@@ -22,10 +22,11 @@ interface UserInterface
     /**
      * verifies if the $pw is valid password for the user.
      *
+     * @param string $id
      * @param string $pw
      * @return bool
      */
-    public function verifyUserPw($pw);
+    public function verifyUserPw($id, $pw);
 
     /**
      * get the user information.

@@ -144,7 +144,7 @@ class Auth
             $this->status = self::AUTH_FAILED;
             return false;
         }
-        if (!$this->user->verifyUserPw($pw)) {
+        if (!$this->user->verifyUserPw($id, $pw)) {
             $this->status = self::AUTH_FAILED;
             return false;
         }
