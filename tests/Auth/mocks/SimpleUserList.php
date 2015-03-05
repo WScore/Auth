@@ -1,25 +1,11 @@
 <?php
 namespace tests\Auth\mocks;
 
+use WScore\Auth\UserAdaptor\UserList;
 use WScore\Auth\UserInterface;
 
-class SimpleUserList implements UserInterface
+class SimpleUserList extends UserList
 {
-    const USER_TYPE = 'simple-user';
-
-    /**
-     * @var array
-     */
-    private $idList;
-
-    /**
-     * @param array $idList
-     */
-    public function __construct( $idList )
-    {
-        $this->idList = $idList;
-    }
-
     /**
      * returns user type token string to identify the
      * user when using multiple user object.
@@ -29,45 +15,5 @@ class SimpleUserList implements UserInterface
     public function getUserType()
     {
         return 'SimpleUserList';
-    }
-
-    /**
-     * verifies if $id is valid user's ID.
-     *
-     * @param string $id
-     * @return bool
-     */
-    public function verifyUserId($id)
-    {
-        return array_key_exists($id, $this->idList);
-    }
-
-    /**
-     * verifies if the $pw is valid password for the user.
-     *
-     * @param string $id
-     * @param string $pw
-     * @return bool
-     */
-    public function verifyUserPw($id, $pw)
-    {
-        if(array_key_exists($id, $this->idList)) {
-            return $this->idList[$id] === $pw;
-        }
-        return false;
-    }
-
-    /**
-     * get the user information.
-     *
-     * @param string $id
-     * @return mixed
-     */
-    public function getUserInfo($id)
-    {
-        if(array_key_exists($id, $this->idList)) {
-            return $this->idList[$id];
-        }
-        return [];
     }
 }
