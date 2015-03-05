@@ -79,6 +79,37 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    function login_successful_if_remember_flag_is_true_but_no_rememberMe()
+    {
+        $authOK = $this->auth->login('test', 'test-PW', true);
+
+        // test auth status
+        $this->assertEquals( true, $authOK );
+        $this->assertEquals( true, $this->auth->isLogin() );
+
+        // get loginInfo
+        $loginInfo = $this->auth->getLoginInfo();
+        $this->assertNotEmpty($loginInfo);
+        $this->assertEquals('test', $loginInfo['id']);
+        $this->assertArrayHasKey('time', $loginInfo);
+        $this->assertEquals(Auth::BY_POST, $loginInfo['by']);
+        $this->assertEquals('SimpleUserList', $loginInfo['type']);
+        $this->assertEquals('test-PW', $loginInfo['user']);
+
+        // test what's saved in the session.
+        $this->assertNotEmpty($this->session);
+        $this->assertArrayHasKey( $this->user_save_id, $this->session );
+        $saved = $this->session[$this->user_save_id];
+        $this->assertEquals('test', $saved['id']);
+        $this->assertArrayHasKey('time', $saved);
+        $this->assertEquals(Auth::BY_POST, $saved['by']);
+        $this->assertEquals('SimpleUserList', $saved['type']);
+        $this->assertEquals('test-PW', $saved['user']);
+    }
+
+    /**
+     * @test
+     */
     function login_fails_for_bad_id()
     {
         $authOK = $this->auth->login('bad', 'bad-PW');
