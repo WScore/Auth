@@ -169,12 +169,9 @@ class Auth
      */
     public function logout()
     {
-        $saveId          = $this->getSaveId();
         $this->status    = self::AUTH_NONE;
         $this->loginInfo = array();
-        if (isset($this->session[$saveId])) {
-            unset($this->session[$saveId]);
-        }
+        $this->setSessionData([]);
     }
 
     // +----------------------------------------------------------------------+
