@@ -1,7 +1,7 @@
 <?php
 namespace WScore\Auth;
 
-interface UserInterface
+interface UserProviderInterface
 {
     /**
      * returns user type token string to identify the

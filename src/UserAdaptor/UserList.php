@@ -1,9 +1,9 @@
 <?php
 namespace WScore\Auth\UserAdaptor;
 
-use WScore\Auth\UserInterface;
+use WScore\Auth\UserProviderInterface;
 
-class UserList implements UserInterface
+class UserList implements UserProviderInterface
 {
     /**
      * @var array
