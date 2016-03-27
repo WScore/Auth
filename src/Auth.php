@@ -136,33 +136,25 @@ class Auth
      */
     public function getUserId()
     {
-        return $this->getLoginKey('id');
+        return $this->getLoginInfo('id');
     }
 
     /**
-     * @return array
+     * @return mixed
      */
-    public function getUserInfo()
+    public function getUser()
     {
-        return $this->getLoginKey('user');
+        return $this->userProvider->getUserInfo($this->getUserId());
     }
 
     /**
-     * @return array
+     * @param null|string $key
+     * @return array|mixed
      */
-    public function getLoginInfo()
+    public function getLoginInfo($key = null)
     {
-        return $this->loginInfo;
-    }
-
-    /**
-     * @param string $key
-     * @return null|mixed
-     */
-    public function getLoginKey($key)
-    {
-        if (!$this->loginInfo) {
-            return null;
+        if (is_null($key)) {
+            return $this->loginInfo;
         }
         return array_key_exists($key, $this->loginInfo) ? $this->loginInfo[$key] : null;
     }
@@ -290,7 +282,6 @@ class Auth
             'time' => date('Y-m-d H:i:s'),
             'by'   => $by,
             'type' => $this->userProvider->getUserType(),
-            'user' => $this->userProvider->getUserInfo($id),
         ];
         $this->loginInfo = $save;
         $this->setSessionData($save);

@@ -128,7 +128,7 @@ class RememberMe_Test extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->auth->isLoginBy(Auth::BY_REMEMBER));
         $this->assertEquals(Auth::BY_REMEMBER, $loginInfo['by']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('remember-PW', $loginInfo['user']);
+        $this->assertEquals('remember-PW', $this->auth->getUser());
     }
 
     /**

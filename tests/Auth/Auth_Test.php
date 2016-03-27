@@ -69,7 +69,7 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('time', $loginInfo);
         $this->assertEquals(Auth::BY_POST, $loginInfo['by']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $loginInfo['user']);
+        $this->assertEquals('test-PW', $this->auth->getUser());
 
         // test what's saved in the session.
         $this->assertNotEmpty($this->session);
@@ -79,7 +79,7 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('time', $saved);
         $this->assertEquals(Auth::BY_POST, $saved['by']);
         $this->assertEquals('SimpleUserList', $saved['type']);
-        $this->assertEquals('test-PW', $saved['user']);
+        $this->assertEquals('test-PW', $this->auth->getUser());
     }
 
     /**
@@ -100,7 +100,7 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('time', $loginInfo);
         $this->assertEquals(Auth::BY_POST, $loginInfo['by']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $loginInfo['user']);
+        $this->assertEquals('test-PW', $this->auth->getUser());
 
         // test what's saved in the session.
         $this->assertNotEmpty($this->session);
@@ -110,7 +110,7 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('time', $saved);
         $this->assertEquals(Auth::BY_POST, $saved['by']);
         $this->assertEquals('SimpleUserList', $saved['type']);
-        $this->assertEquals('test-PW', $saved['user']);
+        $this->assertEquals('test-PW', $this->auth->getUser());
     }
 
     /**
@@ -183,7 +183,7 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
         $this->assertEquals('test', $loginInfo['id']);
         $this->assertEquals(Auth::BY_POST, $loginInfo['by']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $loginInfo['user']);
+        $this->assertEquals('test-PW', $this->auth->getUser());
     }
 
     /**
@@ -204,7 +204,7 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('time', $loginInfo);
         $this->assertEquals(Auth::BY_FORCED, $loginInfo['by']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $loginInfo['user']);
+        $this->assertEquals('test-PW', $this->auth->getUser());
     }
 
     /**
@@ -234,6 +234,6 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
         $this->auth->logout();
         $this->assertEquals(false, $this->auth->isLogin());
         $this->assertEmpty($this->auth->getLoginInfo());
-        $this->assertEmpty($this->auth->getUserInfo());
+        $this->assertEmpty($this->auth->getUser());
     }
 }
