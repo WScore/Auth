@@ -76,15 +76,9 @@ class Auth
     {
         $saveId = $this->getSaveId();
         if (is_null($this->session)) {
-            if (!array_key_exists($saveId, $_SESSION)) {
-                $_SESSION[$saveId] = [];
-            }
-            return $_SESSION[$saveId];
+            return array_key_exists($saveId, $_SESSION) ? $_SESSION[$saveId] : [];
         }
-        if (!array_key_exists($saveId, $this->session)) {
-            $this->session[$saveId] = [];
-        }
-        return $this->session[$saveId];
+        return array_key_exists($saveId, $this->session) ? $this->session[$saveId] : [];
     }
 
     /**
@@ -105,7 +99,16 @@ class Auth
      */
     public function isLogin()
     {
-        return $this->status === self::AUTH_OK;
+        if ($this->status === self::AUTH_OK) {
+            return true;
+        }
+        if ($this->checkSession()) {
+            return true;
+        }
+        if ($this->checkRemembered()) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -200,22 +203,6 @@ class Auth
             $this->rememberMe($id, null);
         }
         return true;
-    }
-
-    /**
-     * checks if already logged in via session or remember-me.
-     *
-     * @return bool
-     */
-    public function isLoggedIn()
-    {
-        if ($this->checkSession()) {
-            return true;
-        }
-        if ($this->checkRemembered()) {
-            return true;
-        }
-        return false;
     }
 
     /**

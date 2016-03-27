@@ -168,7 +168,7 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
         $auth->setSession($session);
 
         // OK. now let's login without input.
-        $authOK = $auth->isLoggedIn();
+        $authOK = $auth->isLogin();
 
         // test auth status
         $this->assertEquals(true, $authOK);
