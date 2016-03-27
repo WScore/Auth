@@ -115,7 +115,7 @@ class RememberMe_Test extends \PHPUnit_Framework_TestCase
         $this->cookie_data['remember-id'] = 'remember';
         $this->cookie_data['remember-me'] = 'its-me';
         $this->idList['remember'] = 'remember-PW'; // different from token!
-        $authOK = $this->auth->isLoggedIn();
+        $authOK = $this->auth->isLogin();
         // test auth status
         $this->assertEquals( true, $authOK );
         $this->assertEquals( true, $this->auth->isLogin() );
@@ -128,7 +128,7 @@ class RememberMe_Test extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->auth->isLoginBy(Auth::BY_REMEMBER));
         $this->assertEquals(Auth::BY_REMEMBER, $loginInfo['by']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('remember-PW', $loginInfo['user']);
+        $this->assertEquals('remember-PW', $this->auth->getUser());
     }
 
     /**
@@ -139,7 +139,7 @@ class RememberMe_Test extends \PHPUnit_Framework_TestCase
         $this->cookie_data['remember-id'] = 'no-remember';
         $this->cookie_data['remember-me'] = 'its-me';
         $this->idList['remember'] = 'remember-PW'; // different from token!
-        $this->assertEquals( false, $this->auth->isLoggedIn() );
+        $this->assertEquals( false, $this->auth->isLogin() );
     }
 
     /**
@@ -150,7 +150,7 @@ class RememberMe_Test extends \PHPUnit_Framework_TestCase
         $this->cookie_data['remember-id'] = 'remember';
         $this->cookie_data['remember-me'] = 'its-not-me';
         $this->idList['remember'] = 'remember-PW'; // different from token!
-        $this->assertEquals( false, $this->auth->isLoggedIn() );
+        $this->assertEquals( false, $this->auth->isLogin() );
     }
 
     /**
@@ -160,7 +160,7 @@ class RememberMe_Test extends \PHPUnit_Framework_TestCase
     {
         $this->cookie_data['remember-me'] = 'its-me';
         $this->idList['remember'] = 'remember-PW'; // different from token!
-        $this->assertEquals( false, $this->auth->isLoggedIn() );
+        $this->assertEquals( false, $this->auth->isLogin() );
     }
     
     /**
@@ -170,7 +170,7 @@ class RememberMe_Test extends \PHPUnit_Framework_TestCase
     {
         $this->cookie_data['remember-id'] = 'remember';
         $this->idList['remember'] = 'remember-PW'; // different from token!
-        $this->assertEquals( false, $this->auth->isLoggedIn() );
+        $this->assertEquals( false, $this->auth->isLogin() );
     }
 
     /**
@@ -181,5 +181,5 @@ class RememberMe_Test extends \PHPUnit_Framework_TestCase
         $this->cookie_data['remember-id'] = 'remember';
         $this->cookie_data['remember-me'] = 'its-me';
         $this->idList['no-remember'] = 'remember-PW'; // different from token!
-        $this->assertEquals( false, $this->auth->isLoggedIn() );
+        $this->assertEquals( false, $this->auth->isLogin() );
     }}

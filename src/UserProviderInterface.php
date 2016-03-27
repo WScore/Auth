@@ -1,7 +1,7 @@
 <?php
 namespace WScore\Auth;
 
-interface UserInterface
+interface UserProviderInterface
 {
     /**
      * returns user type token string to identify the
@@ -13,6 +13,9 @@ interface UserInterface
 
     /**
      * verifies if $id is valid user's ID.
+     * 
+     * used for forcedLogin, but also for session/remember-me login 
+     * if the $id is still valid user ID. 
      *
      * @param string $id
      * @return bool
@@ -20,7 +23,9 @@ interface UserInterface
     public function verifyUserId($id);
 
     /**
-     * verifies if the $pw is valid password for the user.
+     * verifies if the $id and $pw is valid user ID and a password.
+     * 
+     * used for login. 
      *
      * @param string $id
      * @param string $pw

@@ -13,11 +13,10 @@ interface RememberMeInterface
     public function verifyRemember($id, $token);
 
     /**
-     * returns remember token.
+     * must return a remember token for the $id.
      *
-     * a new token will be generated if $token is null. 
-     * otherwise, original $token *maybe* reused or a new 
-     * token maybe generated. 
+     * a new token must be generated if $token is null. 
+     * otherwise, return original $token or *maybe* return the original token for reusing. 
      *
      * @param string      $id
      * @param string|null $token
