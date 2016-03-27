@@ -46,13 +46,13 @@ class Auth
     //  get the state of the auth
     // +----------------------------------------------------------------------+
     /**
-     * @param UserProviderInterface    $user
+     * @param UserProviderInterface    $userProvider
      * @param null|RememberMeInterface $remember
      * @param null|RememberCookie      $cookie
      */
-    public function __construct($user, $remember = null, $cookie = null)
+    public function __construct($userProvider, $remember = null, $cookie = null)
     {
-        $this->userProvider = $user;
+        $this->userProvider = $userProvider;
         $this->status       = self::AUTH_NONE;
         $this->loginInfo    = array();
         if ($remember) {
