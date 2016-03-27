@@ -73,8 +73,8 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
 
         // test what's saved in the session.
         $this->assertNotEmpty($this->session);
-        $this->assertArrayHasKey($this->user_save_id, $this->session);
-        $saved = $this->session[$this->user_save_id];
+        $this->assertArrayHasKey($this->user_save_id, $this->session[Auth::KEY]);
+        $saved = $this->session[Auth::KEY][$this->user_save_id];
         $this->assertEquals('test', $saved['id']);
         $this->assertArrayHasKey('time', $saved);
         $this->assertEquals(Auth::BY_POST, $saved['by']);
@@ -104,8 +104,8 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
 
         // test what's saved in the session.
         $this->assertNotEmpty($this->session);
-        $this->assertArrayHasKey($this->user_save_id, $this->session);
-        $saved = $this->session[$this->user_save_id];
+        $this->assertArrayHasKey($this->user_save_id, $this->session[Auth::KEY]);
+        $saved = $this->session[Auth::KEY][$this->user_save_id];
         $this->assertEquals('test', $saved['id']);
         $this->assertArrayHasKey('time', $saved);
         $this->assertEquals(Auth::BY_POST, $saved['by']);
@@ -162,7 +162,7 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
 
         // set the loginInfo into the session.
         $session = [
-            $this->user_save_id => $loginInfo,
+            Auth::KEY => [$this->user_save_id => $loginInfo],
         ];
         $auth    = new Auth($this->user);
         $auth->setSession($session);

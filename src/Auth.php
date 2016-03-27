@@ -3,6 +3,8 @@ namespace WScore\Auth;
 
 class Auth
 {
+    const KEY = 'WS-Auth';
+    
     const AUTH_NONE = 0;
     const AUTH_OK = 1;
     const AUTH_FAILED = -1;
@@ -76,9 +78,15 @@ class Auth
     {
         $saveId = $this->getSaveId();
         if (is_null($this->session)) {
-            return array_key_exists($saveId, $_SESSION) ? $_SESSION[$saveId] : [];
+            if (array_key_exists(self::KEY, $_SESSION) && array_key_exists($saveId, $_SESSION[self::KEY])) {
+                return $_SESSION[self::KEY][$saveId];
+            }
+            return [];
         }
-        return array_key_exists($saveId, $this->session) ? $this->session[$saveId] : [];
+        if (array_key_exists(self::KEY, $this->session) && array_key_exists($saveId, $this->session[self::KEY])) {
+            return $this->session[self::KEY][$saveId];
+        }
+        return [];
     }
 
     /**
@@ -88,9 +96,9 @@ class Auth
     {
         $saveId = $this->getSaveId();
         if (is_null($this->session)) {
-            $_SESSION[$saveId] = $save;
+            $_SESSION[self::KEY][$saveId] = $save;
         } else {
-            $this->session[$saveId] = $save;
+            $this->session[self::KEY][$saveId] = $save;
         }
     }
 
