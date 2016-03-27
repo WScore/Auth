@@ -107,7 +107,7 @@ class RememberMe implements RememberMeInterface
           WHERE {$this->id_name}=? AND {$this->token_name}=?
         ");
         $found = $stmt->execute([$id, $token]);
-        if ($found && count($found) === 1) {
+        if ($found && is_array($found) && count($found) === 1) {
             return $found[0];
         }
         return [];
