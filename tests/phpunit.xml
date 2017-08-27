@@ -15,4 +15,13 @@
             <directory>Auth</directory>
         </testsuite>
     </testsuites>
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">../src</directory>
+            <exclude>
+                <directory suffix=".php">/path/to/files</directory>
+                <file>../vendor/</file>
+            </exclude>
+        </whitelist>
+    </filter>
 </phpunit>
