@@ -44,6 +44,16 @@ class Auth
      */
     private $rememberCookie;
 
+    /**
+     * @var string|int
+     */
+    private $id;
+
+    /**
+     * @var mixed
+     */
+    private $user;
+
     // +----------------------------------------------------------------------+
     //  get the state of the auth
     // +----------------------------------------------------------------------+
@@ -64,7 +74,7 @@ class Auth
     }
 
     /**
-     * @param null $session
+     * @param null|array $session
      */
     public function setSession(&$session = null)
     {
@@ -140,11 +150,11 @@ class Auth
     }
 
     /**
-     * @return array
+     * @return string|int
      */
     public function getUserId()
     {
-        return $this->getLoginInfo('id');
+        return $this->id;
     }
 
     /**
@@ -152,7 +162,7 @@ class Auth
      */
     public function getUser()
     {
-        return $this->userProvider->getUserInfo($this->getUserId());
+        return $this->user;
     }
 
     /**
@@ -172,6 +182,8 @@ class Auth
      */
     public function logout()
     {
+        $this->id        = null;
+        $this->user      = null;
         $this->status    = self::AUTH_NONE;
         $this->loginInfo = array();
         $this->setSessionData([]);
@@ -190,11 +202,7 @@ class Auth
      */
     public function login($id, $pw, $remember = false)
     {
-        if (!$this->userProvider->verifyUserId($id)) {
-            $this->status = self::AUTH_FAILED;
-            return false;
-        }
-        if (!$this->userProvider->verifyUserPw($id, $pw)) {
+        if (!$this->user = $this->userProvider->getUserByIdAndPw($id, $pw)) {
             $this->status = self::AUTH_FAILED;
             return false;
         }
@@ -211,7 +219,7 @@ class Auth
      */
     public function forceLogin($id)
     {
-        if ($this->userProvider->verifyUserId($id)) {
+        if ($this->user = $this->userProvider->getUserById($id)) {
             return $this->saveOk($id, self::BY_FORCED);
         }
         return false;
@@ -234,7 +242,7 @@ class Auth
         if (!$this->rememberMe->verifyRemember($id, $token)) {
             return false;
         }
-        if (!$this->userProvider->verifyUserId($id)) {
+        if (!$this->user = $this->userProvider->getUserById($id)) {
             return false;
         }
 
@@ -258,9 +266,9 @@ class Auth
         if ($session['type'] !== $this->userProvider->getUserType()) {
             return false;
         }
-        $id = $session['id'];
-        if ($this->userProvider->verifyUserId($id)) {
-            return $this->saveOk($id, $session['by']);
+        $this->id = $session['id'];
+        if ($this->user = $this->userProvider->getUserById($this->id)) {
+            return $this->saveOk($this->id, $session['by']);
         }
         return false;
     }
@@ -284,6 +292,7 @@ class Auth
      */
     private function saveOk($id, $by = self::BY_POST)
     {
+        $this->id        = $id;
         $this->status    = self::AUTH_OK;
         $save            = [
             'id'   => $id,
