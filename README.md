@@ -55,10 +55,9 @@ UserProvider
 The `Auth` requires a user provider object implementing `UserProviderInterface`. 
 The interface has 4 APIs; that are
 
-* `verifyUserId($id)`: for validating if `$id` is a valid user id. 
-* `verifyUserPw($id, $ps)`: for validating if `$id` and `$pw` are valid user-ID and a password. 
+* `getUserById($id)`: for retrieving a user entity for `$id` (a login user). 
+* `getUserByIdAndPw($id, $pw)`: for retrieving a user entity for `$id` and valid `$pw`. 
 * `getUserType()`: for retrieving a key-string to identify the user-provider. 
-* `getUserInfo($id)`: for retrieving a user entity for `$id` (a login user). 
 
 Remember-Me Option
 ------------------
