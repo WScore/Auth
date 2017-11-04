@@ -14,7 +14,7 @@ PSR-1, PSR-2, and PSR-4.
 ### Installation
 
 ```sh
-composer require "wscore/auth: ~0.2"
+composer require "wscore/auth: ^0.3"
 ```
 
 Getting Started
