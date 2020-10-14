@@ -10,34 +10,24 @@ interface UserProviderInterface
      * @return string
      */
     public function getUserType();
-
+    
     /**
-     * verifies if $id is valid user's ID.
+     * returns user data based on user $id. 
+     * must return NULL if no $id exists for login. 
      * 
-     * used for forcedLogin, but also for session/remember-me login 
-     * if the $id is still valid user ID. 
-     *
-     * @param string $id
-     * @return bool
+     * @param string|int $id
+     * @return mixed|null
      */
-    public function verifyUserId($id);
-
+    public function getUserById($id);
+    
     /**
-     * verifies if the $id and $pw is valid user ID and a password.
+     * returns user data based on user $id with 
+     * valid $pw (password). 
+     * must return NULL if no $id exists or $pw is invalidated. 
      * 
-     * used for login. 
-     *
-     * @param string $id
+     * @param string|int $id
      * @param string $pw
-     * @return bool
+     * @return mixed|null
      */
-    public function verifyUserPw($id, $pw);
-
-    /**
-     * get the user information.
-     * 
-     * @param string $id
-     * @return mixed
-     */
-    public function getUserInfo($id);
+    public function getUserByIdAndPw($id, $pw);
 }
