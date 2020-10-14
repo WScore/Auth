@@ -43,8 +43,8 @@ $auth->isLogin();
 You can retrieve login information such as;
 
 ```php
-$user = $auth->getUser(); // login user entity returned by UserProvider's getUserInfo() method.
-$id = $auth->getUserId(); // get login user's id. 
+$user = $auth->getLoginUser(); // login user entity returned by UserProvider's getUserInfo() method.
+$mail = $auth->getLoginId(); // get login user's id. maybe an email? 
 ```
 
 ### Force Login
@@ -80,7 +80,7 @@ To use Remember-me option, use `setRememberMe` method, as
 
 ```php
 $auth = new Auth(...);
-$auth->setRememberMe(new RememberMe());
+$auth->setRememberMe(new MyRememberMe());
 ```
 
 * `$remember` object implementing `RememberMeInterface`, 

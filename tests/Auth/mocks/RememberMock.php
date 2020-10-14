@@ -46,7 +46,7 @@ class RememberMock implements RememberMeInterface
      * @param string|null $token
      * @return bool|string
      */
-    public function rememberMe($id, $token)
+    public function generateToken($id, $token)
     {
         if (array_key_exists($id, $this->remembered)) {
             return $this->remembered[$id];

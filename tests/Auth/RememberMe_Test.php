@@ -125,12 +125,12 @@ class RememberMe_Test extends TestCase
         // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
         $this->assertNotEmpty($loginInfo);
-        $this->assertEquals('remember', $loginInfo['id']);
+        $this->assertEquals('remember', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
         $this->assertTrue($this->auth->isLoginBy(Auth::BY_REMEMBER));
-        $this->assertEquals(Auth::BY_REMEMBER, $loginInfo['by']);
+        $this->assertEquals(Auth::BY_REMEMBER, $loginInfo['loginBy']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('remember-PW', $this->auth->getUser());
+        $this->assertEquals('remember-PW', $this->auth->getLoginUser());
     }
 
     /**

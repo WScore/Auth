@@ -61,7 +61,7 @@ class RememberMe implements RememberMeInterface
      * @param string|null $token
      * @return bool|string
      */
-    public function rememberMe($id, $token)
+    public function generateToken($id, $token)
     {
         $found = $this->getRemembered($id, $token);
         if ($found) {
