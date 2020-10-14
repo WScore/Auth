@@ -1,4 +1,5 @@
 <?php
+
 namespace tests\Auth\mocks;
 
 use WScore\Auth\UserAdaptor\UserList;

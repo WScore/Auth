@@ -1,11 +1,12 @@
 <?php
+
 namespace tests\Auth;
 
 use PHPUnit\Framework\TestCase;
 use tests\Auth\mocks\SimpleUserList;
 use WScore\Auth\Auth;
 
-require_once( dirname( __DIR__ ) . '/autoloader.php' );
+require_once(dirname(__DIR__) . '/autoloader.php');
 
 class Auth_Test extends TestCase
 {
@@ -27,13 +28,13 @@ class Auth_Test extends TestCase
 
     function setup(): void
     {
-        $this->idList       = array(
+        $this->idList = array(
             'test' => 'test-PW',
             'more' => 'more-PW',
         );
-        $this->user         = new SimpleUserList($this->idList);
-        $this->user_save_id = 'auth-' . str_replace('\\', '-', get_class($this->user));
-        $this->auth         = new Auth($this->user);
+        $this->user = new SimpleUserList($this->idList);
+        $this->user_save_id = 'Type:' . $this->user->getUserType();
+        $this->auth = new Auth($this->user);
         $this->auth->setSession($this->session);
     }
 
@@ -59,28 +60,28 @@ class Auth_Test extends TestCase
 
         // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
-        
+
         // test
         $this->assertTrue($this->auth->isLoginBy(Auth::BY_POST));
-        $this->assertEquals('test', $this->auth->getUserId());
+        $this->assertEquals('test', $this->auth->getLoginId());
 
         // directly test the session data.
         $this->assertNotEmpty($loginInfo);
-        $this->assertEquals('test', $loginInfo['id']);
+        $this->assertEquals('test', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
-        $this->assertEquals(Auth::BY_POST, $loginInfo['by']);
+        $this->assertEquals(Auth::BY_POST, $loginInfo['loginBy']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $this->auth->getUser());
+        $this->assertEquals('test-PW', $this->auth->getLoginUser());
 
         // test what's saved in the session.
         $this->assertNotEmpty($this->session);
         $this->assertArrayHasKey($this->user_save_id, $this->session[Auth::KEY]);
         $saved = $this->session[Auth::KEY][$this->user_save_id];
-        $this->assertEquals('test', $saved['id']);
+        $this->assertEquals('test', $saved['loginId']);
         $this->assertArrayHasKey('time', $saved);
-        $this->assertEquals(Auth::BY_POST, $saved['by']);
+        $this->assertEquals(Auth::BY_POST, $saved['loginBy']);
         $this->assertEquals('SimpleUserList', $saved['type']);
-        $this->assertEquals('test-PW', $this->auth->getUser());
+        $this->assertEquals('test-PW', $this->auth->getLoginUser());
     }
 
     /**
@@ -97,21 +98,21 @@ class Auth_Test extends TestCase
         // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
         $this->assertNotEmpty($loginInfo);
-        $this->assertEquals('test', $loginInfo['id']);
+        $this->assertEquals('test', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
-        $this->assertEquals(Auth::BY_POST, $loginInfo['by']);
+        $this->assertEquals(Auth::BY_POST, $loginInfo['loginBy']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $this->auth->getUser());
+        $this->assertEquals('test-PW', $this->auth->getLoginUser());
 
         // test what's saved in the session.
         $this->assertNotEmpty($this->session);
         $this->assertArrayHasKey($this->user_save_id, $this->session[Auth::KEY]);
         $saved = $this->session[Auth::KEY][$this->user_save_id];
-        $this->assertEquals('test', $saved['id']);
+        $this->assertEquals('test', $saved['loginId']);
         $this->assertArrayHasKey('time', $saved);
-        $this->assertEquals(Auth::BY_POST, $saved['by']);
+        $this->assertEquals(Auth::BY_POST, $saved['loginBy']);
         $this->assertEquals('SimpleUserList', $saved['type']);
-        $this->assertEquals('test-PW', $this->auth->getUser());
+        $this->assertEquals('test-PW', $this->auth->getLoginUser());
     }
 
     /**
@@ -165,7 +166,7 @@ class Auth_Test extends TestCase
         $session = [
             Auth::KEY => [$this->user_save_id => $loginInfo],
         ];
-        $auth    = new Auth($this->user);
+        $auth = new Auth($this->user);
         $auth->setSession($session);
 
         // OK. now let's login without input.
@@ -179,12 +180,12 @@ class Auth_Test extends TestCase
         // get loginInfo
         $loginInfo = $auth->getLoginInfo();
         $this->assertNotEmpty($loginInfo);
-        $this->assertEquals('test', $loginInfo['id']);
+        $this->assertEquals('test', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
-        $this->assertEquals('test', $loginInfo['id']);
-        $this->assertEquals(Auth::BY_POST, $loginInfo['by']);
+        $this->assertEquals('test', $loginInfo['loginId']);
+        $this->assertEquals(Auth::BY_POST, $loginInfo['loginBy']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $this->auth->getUser());
+        $this->assertEquals('test-PW', $this->auth->getLoginUser());
     }
 
     /**
@@ -201,11 +202,11 @@ class Auth_Test extends TestCase
         // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
         $this->assertNotEmpty($loginInfo);
-        $this->assertEquals('test', $loginInfo['id']);
+        $this->assertEquals('test', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
-        $this->assertEquals(Auth::BY_FORCED, $loginInfo['by']);
+        $this->assertEquals(Auth::BY_FORCED, $loginInfo['loginBy']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $this->auth->getUser());
+        $this->assertEquals('test-PW', $this->auth->getLoginUser());
     }
 
     /**
@@ -235,6 +236,6 @@ class Auth_Test extends TestCase
         $this->auth->logout();
         $this->assertEquals(false, $this->auth->isLogin());
         $this->assertEmpty($this->auth->getLoginInfo());
-        $this->assertEmpty($this->auth->getUser());
+        $this->assertEmpty($this->auth->getLoginUser());
     }
 }

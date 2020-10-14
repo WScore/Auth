@@ -1,28 +1,28 @@
 <?php
+
 namespace WScore\Auth;
 
 class Auth
 {
     const KEY = 'WS-Auth';
-    
+
     const AUTH_NONE = 0;
     const AUTH_OK = 1;
     const AUTH_FAILED = -1;
 
-    const BY_POST = 'post';
-    const BY_REMEMBER = 'remember';
-    const BY_FORCED = 'forced';
-    const BY_SECRET = 'secret';
+    const BY_POST = 'WITH_PWD';
+    const BY_REMEMBER = 'REMEMBER';
+    const BY_FORCED = 'FORCED';
 
     /**
      * @var int
      */
-    private $status = self::AUTH_NONE;
+    private $status;
 
     /**
      * @var array
      */
-    private $loginInfo = array();
+    private $loginInfo;
 
     /**
      * @var UserProviderInterface
@@ -47,30 +47,39 @@ class Auth
     /**
      * @var string|int
      */
-    private $id;
+    private $loginId;
 
     /**
      * @var mixed
      */
-    private $user;
+    private $loginUser;
 
     // +----------------------------------------------------------------------+
     //  get the state of the auth
     // +----------------------------------------------------------------------+
     /**
-     * @param UserProviderInterface    $userProvider
-     * @param null|RememberMeInterface $remember
-     * @param null|RememberCookie      $cookie
+     * @param UserProviderInterface $userProvider
+     * @param array|null $session
      */
-    public function __construct($userProvider, $remember = null, $cookie = null)
+    public function __construct(UserProviderInterface $userProvider, &$session = null)
     {
         $this->userProvider = $userProvider;
-        $this->status       = self::AUTH_NONE;
-        $this->loginInfo    = array();
-        if ($remember) {
-            $this->rememberMe     = $remember;
-            $this->rememberCookie = $cookie ?: new RememberCookie();
-        }
+        $this->status = self::AUTH_NONE;
+        $this->loginInfo = array();
+
+        $this->setSession($session);
+    }
+
+    /**
+     * set up remember-me option.
+     *
+     * @param RememberMeInterface $rememberMe
+     * @param null $cookie
+     */
+    public function setRememberMe(RememberMeInterface $rememberMe, $cookie = null)
+    {
+        $this->rememberMe = $rememberMe;
+        $this->rememberCookie = $cookie ?: new RememberCookie();
     }
 
     /**
@@ -78,6 +87,14 @@ class Auth
      */
     public function setSession(&$session = null)
     {
+        if ($session === null) {
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                $this->session = &$_SESSION;
+            } else {
+                $this->session = [];
+            }
+            return;
+        }
         $this->session = &$session;
     }
 
@@ -87,12 +104,6 @@ class Auth
     private function getSessionData()
     {
         $saveId = $this->getSaveId();
-        if (is_null($this->session)) {
-            if (array_key_exists(self::KEY, $_SESSION) && array_key_exists($saveId, $_SESSION[self::KEY])) {
-                return $_SESSION[self::KEY][$saveId];
-            }
-            return [];
-        }
         if (array_key_exists(self::KEY, $this->session) && array_key_exists($saveId, $this->session[self::KEY])) {
             return $this->session[self::KEY][$saveId];
         }
@@ -102,14 +113,10 @@ class Auth
     /**
      * @param array $save
      */
-    private function setSessionData($save)
+    private function setSessionData(array $save)
     {
         $saveId = $this->getSaveId();
-        if (is_null($this->session)) {
-            $_SESSION[self::KEY][$saveId] = $save;
-        } else {
-            $this->session[self::KEY][$saveId] = $save;
-        }
+        $this->session[self::KEY][$saveId] = $save;
     }
 
     /**
@@ -133,12 +140,12 @@ class Auth
      * @param string $by
      * @return bool
      */
-    public function isLoginBy($by)
+    public function isLoginBy(string $by)
     {
         if (!$this->isLogin()) {
             return false;
         }
-        return $by == $this->loginInfo['by'];
+        return $by == $this->loginInfo['loginBy'];
     }
 
     /**
@@ -152,29 +159,25 @@ class Auth
     /**
      * @return string|int
      */
-    public function getUserId()
+    public function getLoginId()
     {
-        return $this->id;
+        return $this->loginId;
     }
 
     /**
      * @return mixed
      */
-    public function getUser()
+    public function getLoginUser()
     {
-        return $this->user;
+        return $this->loginUser;
     }
 
     /**
-     * @param null|string $key
-     * @return array|mixed
+     * @return array
      */
-    public function getLoginInfo($key = null)
+    public function getLoginInfo()
     {
-        if (is_null($key)) {
-            return $this->loginInfo;
-        }
-        return array_key_exists($key, $this->loginInfo) ? $this->loginInfo[$key] : null;
+        return $this->loginInfo;
     }
 
     /**
@@ -182,9 +185,9 @@ class Auth
      */
     public function logout()
     {
-        $this->id        = null;
-        $this->user      = null;
-        $this->status    = self::AUTH_NONE;
+        $this->loginId = null;
+        $this->loginUser = null;
+        $this->status = self::AUTH_NONE;
         $this->loginInfo = array();
         $this->setSessionData([]);
     }
@@ -195,32 +198,32 @@ class Auth
     /**
      * login with id and pw to be validated with userInterface.
      *
-     * @param string $id
-     * @param string $pw
-     * @param bool   $remember
+     * @param string $loginId
+     * @param string $password
+     * @param bool $remember
      * @return bool
      */
-    public function login($id, $pw, $remember = false)
+    public function login(string $loginId, string $password, $remember = false)
     {
-        if (!$this->user = $this->userProvider->getUserByIdAndPw($id, $pw)) {
+        if (!$this->loginUser = $this->userProvider->getUserByIdAndPw($loginId, $password)) {
             $this->status = self::AUTH_FAILED;
             return false;
         }
-        $this->saveOk($id, self::BY_POST);
+        $this->createSessionData($loginId, self::BY_POST);
         if ($remember) {
-            $this->rememberMe($id, null);
+            $this->rememberMe($loginId, null);
         }
         return true;
     }
 
     /**
-     * @param $id
-     * @return bool|mixed
+     * @param string $loginId
+     * @return bool
      */
-    public function forceLogin($id)
+    public function forceLogin(string $loginId)
     {
-        if ($this->user = $this->userProvider->getUserById($id)) {
-            return $this->saveOk($id, self::BY_FORCED);
+        if ($this->loginUser = $this->userProvider->getUserById($loginId)) {
+            return $this->createSessionData($loginId, self::BY_FORCED);
         }
         return false;
     }
@@ -233,21 +236,21 @@ class Auth
         if (!$this->rememberMe) {
             return false;
         }
-        if (!$id = $this->rememberCookie->retrieveId()) {
+        if (!$loginId = $this->rememberCookie->retrieveId()) {
             return false;
         }
         if (!$token = $this->rememberCookie->retrieveToken()) {
             return false;
         }
-        if (!$this->rememberMe->verifyRemember($id, $token)) {
+        if (!$this->rememberMe->verifyRemember($loginId, $token)) {
             return false;
         }
-        if (!$this->user = $this->userProvider->getUserById($id)) {
+        if (!$this->loginUser = $this->userProvider->getUserById($loginId)) {
             return false;
         }
 
-        $this->saveOk($id, self::BY_REMEMBER);
-        $this->rememberMe($id, $token);
+        $this->createSessionData($loginId, self::BY_REMEMBER);
+        $this->rememberMe($loginId, $token);
         return true;
     }
 
@@ -266,9 +269,9 @@ class Auth
         if ($session['type'] !== $this->userProvider->getUserType()) {
             return false;
         }
-        $this->id = $session['id'];
-        if ($this->user = $this->userProvider->getUserById($this->id)) {
-            return $this->saveOk($this->id, $session['by']);
+        $this->loginId = $session['loginId'];
+        if ($this->loginUser = $this->userProvider->getUserById($this->loginId)) {
+            return $this->createSessionData($this->loginId, $session['loginBy']);
         }
         return false;
     }
@@ -281,23 +284,22 @@ class Auth
      */
     private function getSaveId()
     {
-        $class = get_class($this->userProvider);
-        return 'auth-' . str_replace('\\', '-', $class);
+        return 'Type:' . $this->userProvider->getUserType();
     }
 
     /**
-     * @param        $id
-     * @param string $by
+     * @param string $loginId
+     * @param string $loginBy
      * @return bool
      */
-    private function saveOk($id, $by = self::BY_POST)
+    private function createSessionData(string $loginId, string $loginBy)
     {
-        $this->id        = $id;
-        $this->status    = self::AUTH_OK;
-        $save            = [
-            'id'   => $id,
+        $this->loginId = $loginId;
+        $this->status = self::AUTH_OK;
+        $save = [
+            'loginId' => $loginId,
             'time' => date('Y-m-d H:i:s'),
-            'by'   => $by,
+            'loginBy' => $loginBy,
             'type' => $this->userProvider->getUserType(),
         ];
         $this->loginInfo = $save;
@@ -307,14 +309,15 @@ class Auth
 
     /**
      * @param string $id
-     * @param string $token
+     * @param string|null $token
      */
-    private function rememberMe($id, $token)
+    private function rememberMe(string $id, ?string $token)
     {
         if (!$this->rememberMe) {
             return;
         }
-        if ($token = $this->rememberMe->rememberMe($id, $token)) {
+        $token = $this->rememberMe->generateToken($id, $token);
+        if ($token) {
             $this->rememberCookie->save($id, $token);
         }
     }
