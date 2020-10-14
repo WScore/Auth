@@ -1,4 +1,5 @@
 <?php
+
 namespace WScore\Auth\RememberAdaptor;
 
 use PDO;
@@ -33,7 +34,7 @@ class RememberMe implements RememberMeInterface
     {
         $this->pdo = $pdo;
     }
-    
+
     /**
      * verifies if the $id and token are in remembrance.
      *
@@ -57,7 +58,7 @@ class RememberMe implements RememberMeInterface
      *
      * set false not to use remember-me.
      *
-     * @param string      $loginId
+     * @param string $loginId
      * @param string|null $token
      * @return bool|string
      */
@@ -73,46 +74,50 @@ class RememberMe implements RememberMeInterface
     }
 
     /**
-     * saves $id and $token as remembered. 
-     * overwrite this method to save more information. 
-     * 
+     * saves $id and $token as remembered.
+     * overwrite this method to save more information.
+     *
      * @param string $id
      * @param string $token
      * @return bool
      */
     protected function saveIdWithToken($id, $token)
     {
-        $stmt  = $this->pdo->prepare("
+        $stmt = $this->pdo->prepare(
+            "
           INSERT {$this->table} 
             ($this->id_name}, {$this->token_name})
           VALUES( ?, ? )
-        ");
+        "
+        );
         return $stmt->execute([$id, $token]);
     }
 
     /**
      * get remembered data for $id and $token.
-     * 
+     *
      * @param string $id
      * @param string $token
      * @return array
      */
     private function getRemembered($id, $token)
     {
-        $stmt  = $this->pdo->prepare("
+        $stmt = $this->pdo->prepare(
+            "
           SELECT
             {$this->id_name} AS user_id, 
             {$this->token_name} AS token
           FROM {$this->table}
           WHERE {$this->id_name}=? AND {$this->token_name}=?
-        ");
+        "
+        );
         $found = $stmt->execute([$id, $token]);
         if ($found && is_array($found) && count($found) === 1) {
             return $found[0];
         }
         return [];
     }
-    
+
     /**
      * calculates a random string for new remember token.
      *

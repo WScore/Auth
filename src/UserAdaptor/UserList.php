@@ -1,4 +1,5 @@
 <?php
+
 namespace WScore\Auth\UserAdaptor;
 
 use WScore\Auth\UserProviderInterface;
@@ -13,7 +14,7 @@ class UserList implements UserProviderInterface
     /**
      * @param array $idList
      */
-    public function __construct( $idList )
+    public function __construct($idList)
     {
         $this->idList = $idList;
     }
@@ -38,7 +39,7 @@ class UserList implements UserProviderInterface
      */
     public function getUserById($loginId)
     {
-        if(array_key_exists($loginId, $this->idList)) {
+        if (array_key_exists($loginId, $this->idList)) {
             return $this->idList[$loginId];
         }
         return null;
@@ -50,12 +51,12 @@ class UserList implements UserProviderInterface
      * must return NULL if no $id exists or $pw is invalidated.
      *
      * @param string|int $loginId
-     * @param string     $password
+     * @param string $password
      * @return mixed|null
      */
     public function getUserByIdAndPw($loginId, $password)
     {
-        if(!array_key_exists($loginId, $this->idList)) {
+        if (!array_key_exists($loginId, $this->idList)) {
             return null;
         }
         if ($this->idList[$loginId] === $password) {

@@ -1,4 +1,5 @@
 <?php
+
 namespace tests\Auth\mocks;
 
 use WScore\Auth\RememberMeInterface;
@@ -7,19 +8,19 @@ class RememberMock implements RememberMeInterface
 {
     /**
      * index of [ $id => $token ]
-     * 
+     *
      * @var array
      */
     public $remembered = [];
 
     /**
      * @param array $list
-     */    
-    public function __construct($list=[])
+     */
+    public function __construct($list = [])
     {
         $this->remembered = $list;
     }
-    
+
     /**
      * verifies if the $id and token are in remembrance.
      *
@@ -42,7 +43,7 @@ class RememberMock implements RememberMeInterface
      * otherwise, original $token *maybe* reused or a new
      * token maybe generated.
      *
-     * @param string      $loginId
+     * @param string $loginId
      * @param string|null $token
      * @return bool|string
      */
@@ -51,7 +52,7 @@ class RememberMock implements RememberMeInterface
         if (array_key_exists($loginId, $this->remembered)) {
             return $this->remembered[$loginId];
         }
-        $this->remembered[$loginId] = 'token-'.$loginId;
+        $this->remembered[$loginId] = 'token-' . $loginId;
         return $this->remembered[$loginId];
     }
 }

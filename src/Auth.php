@@ -1,10 +1,11 @@
 <?php
+
 namespace WScore\Auth;
 
 class Auth
 {
     const KEY = 'WS-Auth';
-    
+
     const AUTH_NONE = 0;
     const AUTH_OK = 1;
     const AUTH_FAILED = -1;
@@ -63,8 +64,8 @@ class Auth
     public function __construct(UserProviderInterface $userProvider, &$session = null)
     {
         $this->userProvider = $userProvider;
-        $this->status       = self::AUTH_NONE;
-        $this->loginInfo    = array();
+        $this->status = self::AUTH_NONE;
+        $this->loginInfo = array();
 
         $this->setSession($session);
     }
@@ -77,8 +78,9 @@ class Auth
      */
     public function setRememberMe(RememberMeInterface $rememberMe, $cookie = null)
     {
-        $this->rememberMe     = $rememberMe;
-        $this->rememberCookie = $cookie ?: new RememberCookie();}
+        $this->rememberMe = $rememberMe;
+        $this->rememberCookie = $cookie ?: new RememberCookie();
+    }
 
     /**
      * @param null|array $session
@@ -183,9 +185,9 @@ class Auth
      */
     public function logout()
     {
-        $this->loginId        = null;
-        $this->loginUser      = null;
-        $this->status    = self::AUTH_NONE;
+        $this->loginId = null;
+        $this->loginUser = null;
+        $this->status = self::AUTH_NONE;
         $this->loginInfo = array();
         $this->setSessionData([]);
     }
@@ -198,7 +200,7 @@ class Auth
      *
      * @param string $loginId
      * @param string $password
-     * @param bool   $remember
+     * @param bool $remember
      * @return bool
      */
     public function login(string $loginId, string $password, $remember = false)
@@ -292,12 +294,12 @@ class Auth
      */
     private function createSessionData(string $loginId, string $loginBy)
     {
-        $this->loginId        = $loginId;
-        $this->status    = self::AUTH_OK;
-        $save            = [
-            'loginId'   => $loginId,
+        $this->loginId = $loginId;
+        $this->status = self::AUTH_OK;
+        $save = [
+            'loginId' => $loginId,
             'time' => date('Y-m-d H:i:s'),
-            'loginBy'   => $loginBy,
+            'loginBy' => $loginBy,
             'type' => $this->userProvider->getUserType(),
         ];
         $this->loginInfo = $save;

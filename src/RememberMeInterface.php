@@ -1,4 +1,5 @@
 <?php
+
 namespace WScore\Auth;
 
 interface RememberMeInterface
@@ -15,10 +16,10 @@ interface RememberMeInterface
     /**
      * must return a remember token for the $id.
      *
-     * a new token must be generated if $token is null. 
-     * otherwise, return original $token or *maybe* return the original token for reusing. 
+     * a new token must be generated if $token is null.
+     * otherwise, return original $token or *maybe* return the original token for reusing.
      *
-     * @param string|int  $loginId
+     * @param string|int $loginId
      * @param string|null $token
      * @return bool|string
      */

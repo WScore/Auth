@@ -1,11 +1,12 @@
 <?php
+
 namespace tests\Auth;
 
 use PHPUnit\Framework\TestCase;
 use tests\Auth\mocks\SimpleUserList;
 use WScore\Auth\Auth;
 
-require_once( dirname( __DIR__ ) . '/autoloader.php' );
+require_once(dirname(__DIR__) . '/autoloader.php');
 
 class Auth_Test extends TestCase
 {
@@ -27,13 +28,13 @@ class Auth_Test extends TestCase
 
     function setup(): void
     {
-        $this->idList       = array(
+        $this->idList = array(
             'test' => 'test-PW',
             'more' => 'more-PW',
         );
-        $this->user         = new SimpleUserList($this->idList);
+        $this->user = new SimpleUserList($this->idList);
         $this->user_save_id = 'Type:' . $this->user->getUserType();
-        $this->auth         = new Auth($this->user);
+        $this->auth = new Auth($this->user);
         $this->auth->setSession($this->session);
     }
 
@@ -59,7 +60,7 @@ class Auth_Test extends TestCase
 
         // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
-        
+
         // test
         $this->assertTrue($this->auth->isLoginBy(Auth::BY_POST));
         $this->assertEquals('test', $this->auth->getLoginId());
@@ -165,7 +166,7 @@ class Auth_Test extends TestCase
         $session = [
             Auth::KEY => [$this->user_save_id => $loginInfo],
         ];
-        $auth    = new Auth($this->user);
+        $auth = new Auth($this->user);
         $auth->setSession($session);
 
         // OK. now let's login without input.
