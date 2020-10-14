@@ -1,12 +1,13 @@
 <?php
 namespace tests\Auth;
 
+use PHPUnit\Framework\TestCase;
 use tests\Auth\mocks\SimpleUserList;
 use WScore\Auth\Auth;
 
 require_once( dirname( __DIR__ ) . '/autoloader.php' );
 
-class Auth_Test extends \PHPUnit_Framework_TestCase
+class Auth_Test extends TestCase
 {
     var $idList = array();
 
@@ -24,7 +25,7 @@ class Auth_Test extends \PHPUnit_Framework_TestCase
 
     var $user_save_id;
 
-    function setup()
+    function setup(): void
     {
         $this->idList       = array(
             'test' => 'test-PW',
