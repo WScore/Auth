@@ -37,13 +37,13 @@ class RememberMe implements RememberMeInterface
     /**
      * verifies if the $id and token are in remembrance.
      *
-     * @param string $id
+     * @param string $loginId
      * @param string $token
      * @return bool
      */
-    public function verifyRemember($id, $token)
+    public function verifyRemember($loginId, $token)
     {
-        $found = $this->getRemembered($id, $token);
+        $found = $this->getRemembered($loginId, $token);
         if ($found) {
             return true;
         }
@@ -57,18 +57,18 @@ class RememberMe implements RememberMeInterface
      *
      * set false not to use remember-me.
      *
-     * @param string      $id
+     * @param string      $loginId
      * @param string|null $token
      * @return bool|string
      */
-    public function generateToken($id, $token)
+    public function generateToken($loginId, $token)
     {
-        $found = $this->getRemembered($id, $token);
+        $found = $this->getRemembered($loginId, $token);
         if ($found) {
             return $found['token'];
         }
         $token = $this->calRememberToken();
-        $this->saveIdWithToken($id, $token);
+        $this->saveIdWithToken($loginId, $token);
         return $token;
     }
 

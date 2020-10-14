@@ -33,13 +33,13 @@ class UserList implements UserProviderInterface
      * returns user data based on user $id.
      * must return NULL if no $id exists for login.
      *
-     * @param string|int $id
+     * @param string|int $loginId
      * @return mixed|null
      */
-    public function getUserById($id)
+    public function getUserById($loginId)
     {
-        if(array_key_exists($id, $this->idList)) {
-            return $this->idList[$id];
+        if(array_key_exists($loginId, $this->idList)) {
+            return $this->idList[$loginId];
         }
         return null;
     }
@@ -49,17 +49,17 @@ class UserList implements UserProviderInterface
      * valid $pw (password).
      * must return NULL if no $id exists or $pw is invalidated.
      *
-     * @param string|int $id
-     * @param string     $pw
+     * @param string|int $loginId
+     * @param string     $password
      * @return mixed|null
      */
-    public function getUserByIdAndPw($id, $pw)
+    public function getUserByIdAndPw($loginId, $password)
     {
-        if(!array_key_exists($id, $this->idList)) {
+        if(!array_key_exists($loginId, $this->idList)) {
             return null;
         }
-        if ($this->idList[$id] === $pw) {
-            return $this->idList[$id];
+        if ($this->idList[$loginId] === $password) {
+            return $this->idList[$loginId];
         }
         return null;
     }
