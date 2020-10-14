@@ -2,6 +2,7 @@
 namespace tests\Auth;
 
 use ArrayObject;
+use PHPUnit\Framework\TestCase;
 use tests\Auth\mocks\RememberMock;
 use tests\Auth\mocks\SimpleUserList;
 use WScore\Auth\Auth;
@@ -9,7 +10,7 @@ use WScore\Auth\RememberCookie;
 
 require_once( dirname( __DIR__ ) . '/autoloader.php' );
 
-class RememberMe_Test extends \PHPUnit_Framework_TestCase
+class RememberMe_Test extends TestCase
 {
     var $idList = array();
 
@@ -46,7 +47,7 @@ class RememberMe_Test extends \PHPUnit_Framework_TestCase
 
     var $cookie_saved = [];
 
-    function setup()
+    function setup(): void
     {
         $this->idList       = new ArrayObject([
             'test' => 'test-PW',

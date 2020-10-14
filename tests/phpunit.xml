@@ -1,15 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit backupGlobals="false"
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         backupGlobals="true"
          backupStaticAttributes="false"
          bootstrap="autoloader.php"
-         colors="true"
+         cacheResult="false"
+         cacheTokens="false"
+         colors="false"
          convertErrorsToExceptions="true"
          convertNoticesToExceptions="true"
          convertWarningsToExceptions="true"
+         forceCoversAnnotation="false"
+         printerClass="PHPUnit\TextUI\ResultPrinter"
          processIsolation="false"
+         stopOnError="false"
          stopOnFailure="false"
-         syntaxCheck="false"
-        >
+         stopOnIncomplete="false"
+         stopOnSkipped="false"
+         stopOnRisky="false"
+         testSuiteLoaderClass="PHPUnit\Runner\StandardTestSuiteLoader"
+         timeoutForSmallTests="1"
+         timeoutForMediumTests="10"
+         timeoutForLargeTests="60"
+>
     <testsuites>
         <testsuite name="WScore/Pile Test Suite">
             <directory>Auth</directory>
@@ -18,10 +30,6 @@
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">../src</directory>
-            <exclude>
-                <directory suffix=".php">/path/to/files</directory>
-                <file>../vendor/</file>
-            </exclude>
         </whitelist>
     </filter>
 </phpunit>

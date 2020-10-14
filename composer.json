@@ -8,13 +8,17 @@
             "email": "kamei@workspot.jp"
         }
     ],
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "require": {
 
     },
     "autoload": {
         "psr-4": {
-            "WScore\\Auth\\": "src/"
+            "WScore\\Auth\\": "src/",
+            "tests\\": "tests/"
         }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.0"
     }
 }
