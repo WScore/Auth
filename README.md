@@ -43,8 +43,22 @@ $auth->isLogin();
 You can retrieve login information such as;
 
 ```php
-$auth->getUser(); // login user entity returned by UserProvider's getUserInfo() method.
-$auth->getUserId(); // get login user's id. 
+$user = $auth->getUser(); // login user entity returned by UserProvider's getUserInfo() method.
+$id = $auth->getUserId(); // get login user's id. 
+```
+
+### Force Login
+
+`forceLogin` method allow to login as a user *without* a password, 
+for purposes, such as system administration. 
+
+```php
+$auth->forceLogin($id);
+```
+
+then, you can check if the login is force or not. 
+
+```php
 $auth->isLoginBy(Auth::BY_FORCED); // check for login method. 
 ```
 
@@ -62,7 +76,12 @@ The interface has 4 APIs; that are
 Remember-Me Option
 ------------------
 
-To use Rmember-me option, construct `$auth` with 
+To use Remember-me option, use `setRememberMe` method, as 
+
+```php
+$auth = new Auth(...);
+$auth->setRememberMe(new RememberMe());
+```
 
 * `$remember` object implementing `RememberMeInterface`, 
 * `RememberCookie` object, 

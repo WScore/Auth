@@ -59,19 +59,18 @@ class Auth
     // +----------------------------------------------------------------------+
     /**
      * @param UserProviderInterface    $userProvider
-     * @param null|RememberMeInterface $remember
-     * @param null|RememberCookie      $cookie
      */
-    public function __construct($userProvider, $remember = null, $cookie = null)
+    public function __construct($userProvider)
     {
         $this->userProvider = $userProvider;
         $this->status       = self::AUTH_NONE;
         $this->loginInfo    = array();
-        if ($remember) {
-            $this->rememberMe     = $remember;
-            $this->rememberCookie = $cookie ?: new RememberCookie();
-        }
     }
+
+    public function setRememberMe(RememberMeInterface $rememberMe, $cookie = null)
+    {
+        $this->rememberMe     = $rememberMe;
+        $this->rememberCookie = $cookie ?: new RememberCookie();}
 
     /**
      * @param null|array $session
