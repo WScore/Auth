@@ -32,7 +32,7 @@ class Auth
     /**
      * @var array
      */
-    private $session = array();
+    private $session = null;
 
     /**
      * @var RememberMeInterface
