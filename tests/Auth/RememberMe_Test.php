@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace tests\Auth;
 
 use ArrayObject;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use tests\Auth\mocks\RememberMock;
 use tests\Auth\mocks\SimpleUserList;
 use WScore\Auth\Auth;
+use WScore\Auth\AuthKind;
 use WScore\Auth\RememberCookie;
 
 require_once dirname(__DIR__) . '/autoloader.php';
@@ -79,9 +81,7 @@ class RememberMe_Test extends TestCase
         $this->assertEquals('tests\Auth\mocks\SimpleUserList', $this->auth->getUserProvider()::class);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function login_with_rememberMeFlag_saves_remembered_data(): void
     {
         $this->assertEmpty($this->cookie_saved);
@@ -102,9 +102,7 @@ class RememberMe_Test extends TestCase
         $this->assertEquals('token-test', $savedCookie['value']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function isLoggedIn_using_remembered_data_successful(): void
     {
         $this->cookie_data['remember-id'] = 'remember';
@@ -118,15 +116,13 @@ class RememberMe_Test extends TestCase
         $this->assertNotEmpty($loginInfo);
         $this->assertEquals('remember', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
-        $this->assertTrue($this->auth->isLoginBy(Auth::BY_REMEMBER));
-        $this->assertEquals(Auth::BY_REMEMBER, $loginInfo['loginBy']);
+        $this->assertTrue($this->auth->isLoginBy(AuthKind::Remember));
+        $this->assertEquals(AuthKind::Remember, $loginInfo['kind']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
         $this->assertEquals('remember-PW', $this->auth->getLoginUser()->secret);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function isLoggedIn_with_bad_id_fails(): void
     {
         $this->cookie_data['remember-id'] = 'no-remember';
@@ -135,9 +131,7 @@ class RememberMe_Test extends TestCase
         $this->assertFalse($this->auth->isLogin());
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function isLoggedIn_with_bad_pw_fails(): void
     {
         $this->cookie_data['remember-id'] = 'remember';
@@ -146,9 +140,7 @@ class RememberMe_Test extends TestCase
         $this->assertFalse($this->auth->isLogin());
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function isLoggedIn_without_id_in_cookie_fails(): void
     {
         $this->cookie_data['remember-me'] = 'its-me';
@@ -156,9 +148,7 @@ class RememberMe_Test extends TestCase
         $this->assertFalse($this->auth->isLogin());
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function isLoggedIn_without_pw_in_cookie_fails(): void
     {
         $this->cookie_data['remember-id'] = 'remember';
@@ -166,9 +156,7 @@ class RememberMe_Test extends TestCase
         $this->assertFalse($this->auth->isLogin());
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function isLoggedIn_without_user_data_fails(): void
     {
         $this->cookie_data['remember-id'] = 'remember';

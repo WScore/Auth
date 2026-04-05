@@ -11,7 +11,6 @@ namespace WScore\Auth\Contracts;
  *   userId: string|int,
  *   providerKey: string,
  *   loginKind: string,
- *   loginBy: string,
  *   time: string,
  * }
  */

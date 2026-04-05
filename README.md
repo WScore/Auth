@@ -68,9 +68,13 @@ $id = $auth->getLoginId();
 ### Force Login
 
 ```php
+use WScore\Auth\AuthKind;
+
 $auth->forceLogin($id);
-$auth->isLoginBy(Auth::BY_FORCED);
+$auth->isLoginBy(AuthKind::ForceLogin);
 ```
+
+`getLoginInfo()` includes `kind` (`AuthKind`), `loginId`, `type` (provider key), `time`.
 
 UserProvider
 ------------

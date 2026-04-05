@@ -75,6 +75,8 @@ class Auth {
 
 セッションの注入形は後述。**Remember Me の具体的な API・契約**は別途文書化する。
 
+セッションおよび `getLoginInfo()` では **別名の `loginBy` 文字列は持たず**、**`AuthKind` だけ**で「どの経路でログインしたか」を表す（例: `Password`, `OAuth`, `Remember` は Remember Me クッキーでセッションを張った場合）。`isLoginBy(AuthKind $kind)` と一箇所に寄せる。
+
 ---
 
 ## 3. 認証シーケンス（OAuth2 の例）

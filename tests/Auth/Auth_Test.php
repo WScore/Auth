@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace tests\Auth;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use tests\Auth\mocks\SimpleUserList;
 use WScore\Auth\Auth;
+use WScore\Auth\AuthKind;
 
 require_once dirname(__DIR__) . '/autoloader.php';
 
@@ -43,9 +45,7 @@ class Auth_Test extends TestCase
         $this->assertEquals('tests\Auth\mocks\SimpleUserList', $this->auth->getUserProvider()::class);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function login_successful_using_post_input(): void
     {
         $authOK = $this->auth->loginWithPassword('test', 'test-PW');
@@ -55,13 +55,13 @@ class Auth_Test extends TestCase
 
         $loginInfo = $this->auth->getLoginInfo();
 
-        $this->assertTrue($this->auth->isLoginBy(Auth::BY_POST));
+        $this->assertTrue($this->auth->isLoginBy(AuthKind::Password));
         $this->assertEquals('test', $this->auth->getLoginId());
 
         $this->assertNotEmpty($loginInfo);
         $this->assertEquals('test', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
-        $this->assertEquals(Auth::BY_POST, $loginInfo['loginBy']);
+        $this->assertEquals(AuthKind::Password, $loginInfo['kind']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
         $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
 
@@ -70,14 +70,12 @@ class Auth_Test extends TestCase
         $saved = $this->session[Auth::KEY][$this->user_save_id];
         $this->assertEquals('test', $saved['userId']);
         $this->assertArrayHasKey('time', $saved);
-        $this->assertEquals(Auth::BY_POST, $saved['loginBy']);
+        $this->assertEquals('Password', $saved['loginKind']);
         $this->assertEquals('SimpleUserList', $saved['providerKey']);
         $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function login_successful_if_remember_flag_is_true_but_no_rememberMe(): void
     {
         $authOK = $this->auth->loginWithPassword('test', 'test-PW', true);
@@ -89,7 +87,7 @@ class Auth_Test extends TestCase
         $this->assertNotEmpty($loginInfo);
         $this->assertEquals('test', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
-        $this->assertEquals(Auth::BY_POST, $loginInfo['loginBy']);
+        $this->assertEquals(AuthKind::Password, $loginInfo['kind']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
         $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
 
@@ -98,14 +96,12 @@ class Auth_Test extends TestCase
         $saved = $this->session[Auth::KEY][$this->user_save_id];
         $this->assertEquals('test', $saved['userId']);
         $this->assertArrayHasKey('time', $saved);
-        $this->assertEquals(Auth::BY_POST, $saved['loginBy']);
+        $this->assertEquals('Password', $saved['loginKind']);
         $this->assertEquals('SimpleUserList', $saved['providerKey']);
         $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function login_fails_for_bad_id(): void
     {
         $authOK = $this->auth->loginWithPassword('bad', 'bad-PW');
@@ -119,9 +115,7 @@ class Auth_Test extends TestCase
         $this->assertEquals(0, count($this->session));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function login_fails_for_bad_pw(): void
     {
         $authOK = $this->auth->loginWithPassword('test', 'bad-PW');
@@ -135,9 +129,7 @@ class Auth_Test extends TestCase
         $this->assertEquals(0, count($this->session));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function isLoggedIn_authenticates_using_session_data(): void
     {
         $this->auth->loginWithPassword('test', 'test-PW');
@@ -149,7 +141,6 @@ class Auth_Test extends TestCase
                     'userId' => 'test',
                     'providerKey' => 'SimpleUserList',
                     'loginKind' => 'Password',
-                    'loginBy' => Auth::BY_POST,
                     'time' => $loginInfo['time'],
                 ],
             ],
@@ -166,14 +157,12 @@ class Auth_Test extends TestCase
         $this->assertNotEmpty($loginInfo);
         $this->assertEquals('test', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
-        $this->assertEquals(Auth::BY_POST, $loginInfo['loginBy']);
+        $this->assertEquals(AuthKind::Password, $loginInfo['kind']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
         $this->assertEquals('test-PW', $auth->getLoginUser()->secret);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function forceLogin_successfully(): void
     {
         $authOK = $this->auth->forceLogin('test');
@@ -184,14 +173,12 @@ class Auth_Test extends TestCase
         $this->assertNotEmpty($loginInfo);
         $this->assertEquals('test', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
-        $this->assertEquals(Auth::BY_FORCED, $loginInfo['loginBy']);
+        $this->assertEquals(AuthKind::ForceLogin, $loginInfo['kind']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
         $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function forceLogin_fails_for_bad_id(): void
     {
         $authOK = $this->auth->forceLogin('bad');
@@ -201,9 +188,7 @@ class Auth_Test extends TestCase
         $this->assertEmpty($loginInfo);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function logout_(): void
     {
         $authOK = $this->auth->loginWithPassword('test', 'test-PW');

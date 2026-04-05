@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Breaking:** `isLoginBy()` takes `AuthKind` (not `BY_*` string constants). Session / `getLoginInfo()` use `kind` (`AuthKind`) instead of `loginBy`.
 - **Breaking:** Major redesign (v2). The pre-1.0 / beta-era API is not preserved.
 - **Breaking:** `UserProviderInterface` is replaced with `findByIdentity` / `getUserId` / `findById` / `getProviderKey()` (`WScore\Auth\Contracts`).
 - **Breaking:** Login entry is `Identity` + `Auth::login()`; use `loginWithPassword()` / `forceLogin()` for common cases.

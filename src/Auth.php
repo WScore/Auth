@@ -17,11 +17,6 @@ class Auth
     public const AUTH_OK = 1;
     public const AUTH_FAILED = -1;
 
-    public const BY_POST = 'WITH_PWD';
-    public const BY_REMEMBER = 'REMEMBER';
-    public const BY_FORCED = 'FORCED';
-    public const BY_OAUTH = 'OAUTH';
-
     private int $status = self::AUTH_NONE;
 
     /** @var array<string, mixed> */
@@ -117,7 +112,7 @@ class Auth
 
             return false;
         }
-        $this->applySuccessfulLogin($user, $identity);
+        $this->applySuccessfulLogin($user, $identity->kind);
         if ($identity->options['remember'] ?? false) {
             $this->persistRemember($this->loginId);
         }
@@ -171,13 +166,14 @@ class Auth
         return $this->user() !== null;
     }
 
-    public function isLoginBy(string $by): bool
+    public function isLoginBy(AuthKind $kind): bool
     {
         if (!$this->isLogin()) {
             return false;
         }
+        $current = $this->loginInfo['kind'] ?? null;
 
-        return ($this->loginInfo['loginBy'] ?? null) === $by;
+        return $current instanceof AuthKind && $current === $kind;
     }
 
     public function getUserProvider(): UserProviderInterface
@@ -191,7 +187,7 @@ class Auth
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, mixed> Includes `kind` ({@see AuthKind}), `loginId`, `type` (provider key), `time`.
      */
     public function getLoginInfo(): array
     {
@@ -207,37 +203,33 @@ class Auth
         $this->sessionStore->clear();
     }
 
-    private function applySuccessfulLogin(object $user, Identity $identity): void
+    private function applySuccessfulLogin(object $user, AuthKind $kind): void
     {
         $this->currentUser = $user;
         $this->loginId = $this->userProvider->getUserId($user);
         $this->status = self::AUTH_OK;
         $time = date('Y-m-d H:i:s');
-        $loginBy = $this->mapKindToLoginBy($identity->kind);
         $payload = [
             'userId' => $this->loginId,
             'providerKey' => $this->userProvider->getProviderKey(),
-            'loginKind' => $identity->kind->name,
-            'loginBy' => $loginBy,
+            'loginKind' => $kind->name,
             'time' => $time,
         ];
         $this->sessionStore->write($payload);
-        $this->loginInfo = [
-            'loginId' => $this->loginId,
-            'loginBy' => $loginBy,
+        $this->loginInfo = $this->buildLoginInfo($this->loginId, $kind, $time);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildLoginInfo(string|int $loginId, AuthKind $kind, string $time): array
+    {
+        return [
+            'loginId' => $loginId,
+            'kind' => $kind,
             'type' => $this->userProvider->getProviderKey(),
             'time' => $time,
         ];
-    }
-
-    private function mapKindToLoginBy(AuthKind $kind): string
-    {
-        return match ($kind) {
-            AuthKind::Password => self::BY_POST,
-            AuthKind::ForceLogin => self::BY_FORCED,
-            AuthKind::OAuth => self::BY_OAUTH,
-            AuthKind::OneTimeToken => 'ONETIMETOKEN',
-        };
     }
 
     private function restoreFromSession(): bool
@@ -259,17 +251,32 @@ class Auth
 
             return false;
         }
+        $kind = $this->parseLoginKindFromPayload($payload);
         $this->currentUser = $user;
         $this->loginId = $userId;
         $this->status = self::AUTH_OK;
-        $this->loginInfo = [
-            'loginId' => $userId,
-            'loginBy' => $payload['loginBy'] ?? self::BY_POST,
-            'type' => $this->userProvider->getProviderKey(),
-            'time' => $payload['time'] ?? date('Y-m-d H:i:s'),
-        ];
+        $this->loginInfo = $this->buildLoginInfo(
+            $userId,
+            $kind,
+            $payload['time'] ?? date('Y-m-d H:i:s'),
+        );
 
         return true;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function parseLoginKindFromPayload(array $payload): AuthKind
+    {
+        $name = $payload['loginKind'] ?? '';
+        foreach (AuthKind::cases() as $case) {
+            if ($case->name === $name) {
+                return $case;
+            }
+        }
+
+        return AuthKind::Password;
     }
 
     private function checkRemembered(): bool
@@ -296,20 +303,15 @@ class Auth
         $this->loginId = $this->userProvider->getUserId($user);
         $this->status = self::AUTH_OK;
         $time = date('Y-m-d H:i:s');
+        $kind = AuthKind::Remember;
         $payload = [
             'userId' => $this->loginId,
             'providerKey' => $this->userProvider->getProviderKey(),
-            'loginKind' => AuthKind::Password->name,
-            'loginBy' => self::BY_REMEMBER,
+            'loginKind' => $kind->name,
             'time' => $time,
         ];
         $this->sessionStore->write($payload);
-        $this->loginInfo = [
-            'loginId' => $this->loginId,
-            'loginBy' => self::BY_REMEMBER,
-            'type' => $this->userProvider->getProviderKey(),
-            'time' => $time,
-        ];
+        $this->loginInfo = $this->buildLoginInfo($this->loginId, $kind, $time);
         $this->persistRemember($this->loginId, $token);
 
         return true;
