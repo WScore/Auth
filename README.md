@@ -76,6 +76,20 @@ $auth->getUserProvider(); // the UserProviderInterface instance
 $auth->logout(); // clears session segment, in-memory state, and remember-me cookies/tokens.
 ```
 
+### Timeouts
+
+You can configure automatic logout based on the time elapsed since initial login (absolute timeout) or since the last access (activity timeout).
+
+```php
+// Invalidate after 1 hour from initial login
+$auth->setAbsoluteTimeout(3600);
+
+// Invalidate after 15 minutes of inactivity
+$auth->setActivityTimeout(900);
+```
+
+When a timeout is detected, `logout()` is automatically called during `isLogin()` or `user()`.
+
 ### AuthKind
 
 `getLoginInfo()['kind']` and `isLoginBy()` use `WScore\Auth\AuthKind`: `Password`, `ForceLogin`, `OAuth`, `OneTimeToken`, `Remember`.

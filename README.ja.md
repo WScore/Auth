@@ -76,6 +76,20 @@ $auth->getUserProvider(); // the UserProviderInterface instance
 $auth->logout(); // セッション、メモリ上の状態、および Remember-me クッキーとトークンをクリアします。
 ```
 
+### タイムアウト設定
+
+ログインからの経過時間（絶対タイムアウト）や、最終アクセスからの経過時間（無操作タイムアウト）による自動ログアウトを設定できます。
+
+```php
+// ログインから 1 時間で無効化
+$auth->setAbsoluteTimeout(3600);
+
+// 最終アクセスから 15 分で無効化
+$auth->setActivityTimeout(900);
+```
+
+タイムアウトが発生した場合、`isLogin()` や `user()` の呼び出し時に自動的に `logout()` が実行されます。
+
 ### AuthKind
 
 `getLoginInfo()['kind']` と `isLoginBy()` は `WScore\Auth\AuthKind` を使います: `Password`、`ForceLogin`、`OAuth`、`OneTimeToken`、`Remember`。

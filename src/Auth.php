@@ -41,6 +41,10 @@ class Auth
 
     private ?object $currentUser = null;
 
+    private ?int $absoluteTimeout = null;
+
+    private ?int $activityTimeout = null;
+
     /**
      * @param array|null $session session bucket (by ref); null uses $_SESSION when active else an internal array
      */
@@ -118,6 +122,28 @@ class Auth
         $this->regenerateSessionOnLogin = $regenerate;
     }
 
+    /**
+     * Set the absolute timeout in seconds.
+     * The session will be invalidated after this duration since the initial login.
+     *
+     * @param int|null $seconds
+     */
+    public function setAbsoluteTimeout(?int $seconds): void
+    {
+        $this->absoluteTimeout = $seconds;
+    }
+
+    /**
+     * Set the activity timeout in seconds.
+     * The session will be invalidated if there is no activity for this duration.
+     *
+     * @param int|null $seconds
+     */
+    public function setActivityTimeout(?int $seconds): void
+    {
+        $this->activityTimeout = $seconds;
+    }
+
     public function login(Identity $identity): bool
     {
         $user = $this->userProvider->findByIdentity($identity);
@@ -152,10 +178,10 @@ class Auth
      */
     public function user(): ?object
     {
-        if ($this->currentUser !== null) {
+        if ($this->restoreFromSession()) {
             return $this->currentUser;
         }
-        if ($this->restoreFromSession()) {
+        if ($this->currentUser !== null) {
             return $this->currentUser;
         }
         if ($this->checkRemembered()) {
@@ -217,11 +243,13 @@ class Auth
         $this->currentUser = $user;
         $this->loginId = $this->userProvider->getUserId($user);
         $time = date('Y-m-d H:i:s');
+        $now = time();
         $payload = [
             'userId' => $this->loginId,
             'providerKey' => $this->userProvider->getProviderKey(),
             'loginKind' => $kind->name,
             'time' => $time,
+            'lastActivity' => $now,
         ];
         $this->sessionStore->write($payload);
         $this->loginInfo = $this->buildLoginInfo($this->loginId, $kind, $time);
@@ -249,6 +277,27 @@ class Auth
         if (($payload['providerKey'] ?? '') !== $this->userProvider->getProviderKey()) {
             return false;
         }
+
+        // Check timeouts
+        $now = time();
+        if ($this->absoluteTimeout !== null) {
+            $loginTimeStr = $payload['time'] ?? null;
+            if ($loginTimeStr) {
+                $loginTime = strtotime($loginTimeStr);
+                if ($now - $loginTime > $this->absoluteTimeout) {
+                    $this->logout();
+                    return false;
+                }
+            }
+        }
+        if ($this->activityTimeout !== null) {
+            $lastActivity = $payload['lastActivity'] ?? null;
+            if ($lastActivity && ($now - $lastActivity > $this->activityTimeout)) {
+                $this->logout();
+                return false;
+            }
+        }
+
         $userId = $payload['userId'] ?? null;
         if ($userId === null) {
             return false;
@@ -259,6 +308,11 @@ class Auth
 
             return false;
         }
+
+        // Update last activity
+        $payload['lastActivity'] = $now;
+        $this->sessionStore->write($payload);
+
         $kind = $this->parseLoginKindFromPayload($payload);
         $this->currentUser = $user;
         $this->loginId = $userId;
