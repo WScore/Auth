@@ -13,12 +13,6 @@ class Auth
 {
     public const KEY = 'WS-Auth';
 
-    public const AUTH_NONE = 0;
-    public const AUTH_OK = 1;
-    public const AUTH_FAILED = -1;
-
-    private int $status = self::AUTH_NONE;
-
     /** @var array<string, mixed> */
     private array $loginInfo = [];
 
@@ -108,8 +102,6 @@ class Auth
     {
         $user = $this->userProvider->findByIdentity($identity);
         if ($user === null) {
-            $this->status = self::AUTH_FAILED;
-
             return false;
         }
         $this->applySuccessfulLogin($user, $identity->kind);
@@ -198,7 +190,6 @@ class Auth
     {
         $this->loginId = null;
         $this->currentUser = null;
-        $this->status = self::AUTH_NONE;
         $this->loginInfo = [];
         $this->sessionStore->clear();
     }
@@ -207,7 +198,6 @@ class Auth
     {
         $this->currentUser = $user;
         $this->loginId = $this->userProvider->getUserId($user);
-        $this->status = self::AUTH_OK;
         $time = date('Y-m-d H:i:s');
         $payload = [
             'userId' => $this->loginId,
@@ -254,7 +244,6 @@ class Auth
         $kind = $this->parseLoginKindFromPayload($payload);
         $this->currentUser = $user;
         $this->loginId = $userId;
-        $this->status = self::AUTH_OK;
         $this->loginInfo = $this->buildLoginInfo(
             $userId,
             $kind,
@@ -301,7 +290,6 @@ class Auth
         }
         $this->currentUser = $user;
         $this->loginId = $this->userProvider->getUserId($user);
-        $this->status = self::AUTH_OK;
         $time = date('Y-m-d H:i:s');
         $kind = AuthKind::Remember;
         $payload = [
