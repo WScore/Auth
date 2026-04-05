@@ -40,8 +40,8 @@ readonly class Identity {
     ) {}
 }
 
-// OAuth の例（概念）
-// new Identity(AuthKind::OAuth, ['sub' => '…', 'email' => '…'], ['provider' => 'google'])
+// OAuth の例（概念）— プロバイダ固有情報の主キーは Identity::PROVIDER_USER_ID_KEY（ファクトリ newOAuth が設定）
+// Identity::newOAuth('google', $providerUserId, ['email' => '…'])
 ```
 
 `ForceLogin` は **誤用しやすい**。必ずアプリ側でゲートする（IP、ロール、ワンタイム署名など）。認可をライブラリに含めないこととは別に、ドキュメントで注意喚起する。
@@ -82,7 +82,7 @@ class Auth {
 ## 3. 認証シーケンス（OAuth2 の例）
 
 1. **Bridge:** Middleware / Controller が OAuth プロバイダからトークン・ユーザー情報を取得（state 等は Bridge またはアプリの責務）。
-2. **Identity 生成:** 例: `new Identity(AuthKind::OAuth, ['sub' => '…', 'email' => '…'], ['provider' => 'google'])`。
+2. **Identity 生成:** 例: `Identity::newOAuth('google', $providerUserId, ['email' => '…'])`（生レスポンスの `sub` / `id` 等は Bridge で取り出す）。
 3. **ログイン:** `Auth::login($identity)` → 内部で `UserProvider::findByIdentity()`。
 4. **永続化連携:** Provider が `user_connects` 等を参照し、対応する `User` を返す。
 5. **セッション:** `Auth` が `getUserId($user)` で ID を得てセッションに保存。

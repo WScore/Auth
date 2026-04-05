@@ -52,11 +52,11 @@ use WScore\Auth\Identity;
 
 $ok = $auth->login(Identity::newPassword($id, $password));
 
-// OAuth example
-$ok = $auth->login(Identity::newOAuth('google', [
-    'sub' => $sub,
+// OAuth: プロバイダが付与するユーザー ID（生レスポンスの sub / id 等はブリッジで取り出す）
+$ok = $auth->login(Identity::newOAuth('google', $googleUserId, [
     'email' => $email,
 ]));
+// UserProvider 側では credentials[Identity::PROVIDER_USER_ID_KEY] で参照
 ```
 
 Check login state:

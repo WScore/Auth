@@ -10,6 +10,8 @@ namespace WScore\Auth;
  */
 final readonly class Identity
 {
+    public const PROVIDER_USER_ID_KEY = 'provider_user_id';
+
     /**
      * @param Credentials $credentials
      * @param Options $options e.g. OAuth: ['provider' => 'google'], remember: ['remember' => true]
@@ -41,11 +43,22 @@ final readonly class Identity
     }
 
     /**
-     * @param Credentials $credentials e.g. ['sub' => '…', 'email' => '…']
-     * @param Options $options merged after `provider` (cannot override provider key from the left)
+     * Social / OIDC でプロバイダが付与する **ユーザー固有情報の主キー**（OIDC の `sub`、各 API の `id` 等。
+     * ブリッジ側で生データから取り出し、ここへ文字列として渡す）。
+     *
+     * `credentials` 内では常に {@see self::PROVIDER_USER_ID_KEY} で参照できるようにする。
+     *
+     * @param Credentials $extraCredentials 例: email, name, avatar など（プロバイダ任せ）
+     * @param Options $options `provider` は第1引数とマージされ、左側が優先（上書き不可）
      */
-    public static function newOAuth(string $provider, array $credentials, array $options = []): self
-    {
+    public static function newOAuth(
+        string $provider,
+        string $providerUserId,
+        array $extraCredentials = [],
+        array $options = [],
+    ): self {
+        $credentials = [self::PROVIDER_USER_ID_KEY => $providerUserId] + $extraCredentials;
+
         return new self(AuthKind::OAuth, $credentials, ['provider' => $provider] + $options);
     }
 
