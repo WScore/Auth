@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - **Breaking:** Removed `Auth::{AUTH_NONE,AUTH_OK,AUTH_FAILED}`; use `isLogin()` / `user()` / `login()` return value instead.
+- **Breaking:** Removed `Auth::getLoginUser()`; use `Auth::user()`.
 - **Breaking:** `isLoginBy()` takes `AuthKind` (not `BY_*` string constants). Session / `getLoginInfo()` use `kind` (`AuthKind`) instead of `loginBy`.
 - **Breaking:** Major redesign (v2). The pre-1.0 / beta-era API is not preserved.
 - **Breaking:** `UserProviderInterface` is replaced with `findByIdentity` / `getUserId` / `findById` / `getProviderKey()` (`WScore\Auth\Contracts`).
@@ -23,5 +24,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `RememberCookie::forBrowser(int $rememberDays)`, `setRememberDays` / `getRememberDays`.
 - **Breaking:** `Auth` constructor no longer takes Remember-me arguments; use `setRememberMe(?RememberMeInterface, ?RememberCookie, ?int $lifetimeDays)` only.
 - `AuthKind` enum, `Identity` value object.
-- `loginWithPassword()`, `user()` (and `getLoginUser()` as alias).
+- `loginWithPassword()`, `user()`.
 

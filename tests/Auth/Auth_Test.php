@@ -63,7 +63,7 @@ class Auth_Test extends TestCase
         $this->assertArrayHasKey('time', $loginInfo);
         $this->assertEquals(AuthKind::Password, $loginInfo['kind']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
+        $this->assertEquals('test-PW', $this->auth->user()->secret);
 
         $this->assertNotEmpty($this->session);
         $this->assertArrayHasKey($this->user_save_id, $this->session[Auth::KEY]);
@@ -72,7 +72,7 @@ class Auth_Test extends TestCase
         $this->assertArrayHasKey('time', $saved);
         $this->assertEquals('Password', $saved['loginKind']);
         $this->assertEquals('SimpleUserList', $saved['providerKey']);
-        $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
+        $this->assertEquals('test-PW', $this->auth->user()->secret);
     }
 
     #[Test]
@@ -89,7 +89,7 @@ class Auth_Test extends TestCase
         $this->assertArrayHasKey('time', $loginInfo);
         $this->assertEquals(AuthKind::Password, $loginInfo['kind']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
+        $this->assertEquals('test-PW', $this->auth->user()->secret);
 
         $this->assertNotEmpty($this->session);
         $this->assertArrayHasKey($this->user_save_id, $this->session[Auth::KEY]);
@@ -98,7 +98,7 @@ class Auth_Test extends TestCase
         $this->assertArrayHasKey('time', $saved);
         $this->assertEquals('Password', $saved['loginKind']);
         $this->assertEquals('SimpleUserList', $saved['providerKey']);
-        $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
+        $this->assertEquals('test-PW', $this->auth->user()->secret);
     }
 
     #[Test]
@@ -159,7 +159,7 @@ class Auth_Test extends TestCase
         $this->assertArrayHasKey('time', $loginInfo);
         $this->assertEquals(AuthKind::Password, $loginInfo['kind']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $auth->getLoginUser()->secret);
+        $this->assertEquals('test-PW', $auth->user()->secret);
     }
 
     #[Test]
@@ -175,7 +175,7 @@ class Auth_Test extends TestCase
         $this->assertArrayHasKey('time', $loginInfo);
         $this->assertEquals(AuthKind::ForceLogin, $loginInfo['kind']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
+        $this->assertEquals('test-PW', $this->auth->user()->secret);
     }
 
     #[Test]
@@ -199,6 +199,6 @@ class Auth_Test extends TestCase
         $this->auth->logout();
         $this->assertFalse($this->auth->isLogin());
         $this->assertEmpty($this->auth->getLoginInfo());
-        $this->assertNull($this->auth->getLoginUser());
+        $this->assertNull($this->auth->user());
     }
 }

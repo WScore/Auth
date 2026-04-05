@@ -119,7 +119,7 @@ class RememberMe_Test extends TestCase
         $this->assertTrue($this->auth->isLoginBy(AuthKind::Remember));
         $this->assertEquals(AuthKind::Remember, $loginInfo['kind']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('remember-PW', $this->auth->getLoginUser()->secret);
+        $this->assertEquals('remember-PW', $this->auth->user()->secret);
     }
 
     #[Test]

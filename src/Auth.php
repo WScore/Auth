@@ -155,12 +155,6 @@ class Auth
         return null;
     }
 
-    /** @deprecated use {@see user()} */
-    public function getLoginUser(): ?object
-    {
-        return $this->user();
-    }
-
     public function isLogin(): bool
     {
         return $this->user() !== null;
