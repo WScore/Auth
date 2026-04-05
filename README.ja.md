@@ -70,8 +70,10 @@ $auth->getUserProvider(); // the UserProviderInterface instance
 
 `user()` の解決順は、メモリ上のキャッシュ → セッション → Remember クッキー（`setRememberMe` を設定済みの場合）です。
 
+**注意:** 有効なセッションがない状態で `isLogin()` や `user()` を呼び出すと、Remember-me クッキーによる自動ログインが試行される場合があります。これにより、新しいクッキーが送信されたり、バックエンドのトークンが更新されたりする副作用が発生する可能性があります。
+
 ```php
-$auth->logout(); // clears session segment and in-memory state (remember-me cookies are not cleared here—expire them in app code if needed)
+$auth->logout(); // セッション、メモリ上の状態、および Remember-me クッキーとトークンをクリアします。
 ```
 
 ### AuthKind
@@ -132,6 +134,15 @@ $auth->setRememberMe($rememberMe, $cookie);
 ### 上級
 
 `setAuthSessionStore(WScore\Auth\Contracts\AuthSessionStoreInterface $store)` — 既定の `ArrayAuthSessionStore` を差し替えます（統合テストや配列以外のセッション保存先など）。
+
+#### セッション ID の再生成
+
+セキュリティ上の理由（セッション固定攻撃対策）により、既定では `Auth::login()` 成功時に `session_regenerate_id(true)` を呼び出します。
+ただし、不安定なネットワーク環境や特定のブラウザ挙動により、稀にセッション消失が発生する場合があります。この挙動を制御したい場合は、以下のように設定を変更できます：
+
+```php
+$auth->setRegenerateSessionOnLogin(false);
+```
 
 ログイン時に Remember を有効にする例:
 

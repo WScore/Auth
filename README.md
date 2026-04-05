@@ -70,8 +70,10 @@ $auth->getUserProvider(); // the UserProviderInterface instance
 
 `user()` resolves in order: in-memory cache → session → remember-me cookie (if `setRememberMe` was configured).
 
+**Note:** Calling `isLogin()` or `user()` may trigger an automatic login attempt via remember-me cookies if no active session exists. This can result in new cookies being sent or backend tokens being rotated.
+
 ```php
-$auth->logout(); // clears session segment and in-memory state (remember-me cookies are not cleared here—expire them in app code if needed)
+$auth->logout(); // clears session segment, in-memory state, and remember-me cookies/tokens.
 ```
 
 ### AuthKind
@@ -132,6 +134,14 @@ $auth->setRememberMe($rememberMe, $cookie);
 ### Advanced
 
 `setAuthSessionStore(WScore\Auth\Contracts\AuthSessionStoreInterface $store)` — replace the default `ArrayAuthSessionStore` (e.g. integration tests or a non-array session backend).
+
+#### Session Regeneration
+
+By default, `Auth::login()` calls `session_regenerate_id(true)` for security (session fixation prevention). However, this can cause session loss on unstable networks or specific browser environments. You can disable this behavior if needed:
+
+```php
+$auth->setRegenerateSessionOnLogin(false);
+```
 
 Enable on login:
 

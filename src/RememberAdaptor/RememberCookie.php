@@ -91,8 +91,19 @@ class RememberCookie
     {
         $time = time() + 60 * 60 * 24 * $this->rememberDays;
         $func = $this->setCookie;
-        $func($this->name_id, $id, $time, '/', true);
-        $func($this->token_id, $token, $time, '/', true);
+        $func($this->name_id, $id, $time, '/', '');
+        $func($this->token_id, $token, $time, '/', '');
+    }
+
+    /**
+     * Clear remember-me cookie.
+     */
+    public function clear(): void
+    {
+        $time = time() - 3600;
+        $func = $this->setCookie;
+        $func($this->name_id, '', $time, '/', '');
+        $func($this->token_id, '', $time, '/', '');
     }
 
     /**

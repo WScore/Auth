@@ -36,6 +36,8 @@ class Auth
     private RememberCookie $rememberCookie;
 
     private string|int|null $loginId = null;
+    
+    private bool $regenerateSessionOnLogin = true;
 
     private ?object $currentUser = null;
 
@@ -106,11 +108,24 @@ class Auth
         }
     }
 
+    /**
+     * Set whether to regenerate session id on successful login (to prevent session fixation).
+     *
+     * @param bool $regenerate
+     */
+    public function setRegenerateSessionOnLogin(bool $regenerate): void
+    {
+        $this->regenerateSessionOnLogin = $regenerate;
+    }
+
     public function login(Identity $identity): bool
     {
         $user = $this->userProvider->findByIdentity($identity);
         if ($user === null) {
             return false;
+        }
+        if ($this->regenerateSessionOnLogin && session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
         }
         $this->applySuccessfulLogin($user, $identity->kind);
         if ($identity->options['remember'] ?? false) {
@@ -185,6 +200,12 @@ class Auth
 
     public function logout(): void
     {
+        if ($this->loginId && $this->rememberMe) {
+            $this->rememberMe->removeToken($this->loginId);
+        }
+        if ($this->rememberCookie) {
+            $this->rememberCookie->clear();
+        }
         $this->loginId = null;
         $this->currentUser = null;
         $this->loginInfo = [];

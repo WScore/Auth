@@ -55,4 +55,9 @@ class RememberMock implements RememberMeInterface
         $this->remembered[$loginId] = 'token-' . $loginId;
         return $this->remembered[$loginId];
     }
+
+    public function removeToken($loginId): void
+    {
+        unset($this->remembered[$loginId]);
+    }
 }

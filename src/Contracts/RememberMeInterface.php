@@ -24,4 +24,12 @@ interface RememberMeInterface
      * @return bool|string
      */
     public function generateToken($loginId, $token);
+
+    /**
+     * removes the remember token for the $id.
+     *
+     * @param string|int $loginId
+     * @return void
+     */
+    public function removeToken($loginId): void;
 }
