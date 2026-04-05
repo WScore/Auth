@@ -1,9 +1,9 @@
 WScore.Auth
 ===========
 
-**v2** は `Identity` と `UserProviderInterface` を中心にした設計です。
+**v2** is built around `Identity` and `UserProviderInterface`.
 
-以前の **0.x 系（ベータ相当）とは API が互換ではありません。** アップグレードは実装の載せ替えを前提にしてください。破壊的変更を許容してよい前提で進めています。
+It is **not API-compatible** with earlier **0.x (beta-era)** releases. Treat upgrades as a rewrite; breaking changes are expected.
 
 ### License
 
@@ -23,7 +23,7 @@ PHP 8.2+
 composer require "wscore/auth:^2.0"
 ```
 
-（v2 リリース前は VCS / `@dev` / プレリリースタグに合わせて制約を指定してください。）
+Before v2 is tagged on Packagist, pin VCS / `@dev` / pre-release tags as needed.
 
 Getting Started
 --------------
@@ -52,11 +52,11 @@ use WScore\Auth\Identity;
 
 $ok = $auth->login(Identity::newPassword($id, $password));
 
-// OAuth: プロバイダが付与するユーザー ID（生レスポンスの sub / id 等はブリッジで取り出す）
+// OAuth: provider user id (extract sub / id from raw responses in your bridge)
 $ok = $auth->login(Identity::newOAuth('google', $googleUserId, [
     'email' => $email,
 ]));
-// UserProvider 側では credentials[Identity::CREDENTIAL_PROVIDER_USER_ID] で参照
+// In UserProvider, read credentials[Identity::CREDENTIAL_PROVIDER_USER_ID]
 ```
 
 Check login state:
@@ -65,7 +65,23 @@ Check login state:
 $auth->isLogin();
 $user = $auth->user();
 $id = $auth->getLoginId();
+$auth->getUserProvider(); // the UserProviderInterface instance
 ```
+
+`user()` resolves in order: in-memory cache → session → remember-me cookie (if `setRememberMe` was configured).
+
+```php
+$auth->logout(); // clears session segment and in-memory state (remember-me cookies are not cleared here—expire them in app code if needed)
+```
+
+### AuthKind
+
+`getLoginInfo()['kind']` and `isLoginBy()` use `WScore\Auth\AuthKind`: `Password`, `ForceLogin`, `OAuth`, `OneTimeToken`, `Remember`.
+
+- **`Remember`** — the session was established via remember-me cookie validation (no password submitted on this login). This differs from password login with the “remember me” box checked, which stays **`Password`**.
+- Use `isLoginBy(AuthKind::Remember)` (or inspect `getLoginInfo()['kind']`) to distinguish that path from interactive logins.
+
+Other `Identity` constructors: `Identity::newForceLogin`, `Identity::newOneTimeToken`, `Identity::newRemember` (for providers that resolve remember pairs in `findByIdentity`).
 
 ### Force Login
 
@@ -78,8 +94,7 @@ $auth->isLoginBy(AuthKind::ForceLogin);
 
 `getLoginInfo()` includes `kind` (`AuthKind`), `loginId`, `type` (provider key), `time`.
 
-UserProvider
-------------
+## UserProvider
 
 Implement `WScore\Auth\Contracts\UserProviderInterface`:
 
@@ -88,36 +103,43 @@ Implement `WScore\Auth\Contracts\UserProviderInterface`:
 * `findById(string|int $userId): ?object` — restore user from that id.
 * `getProviderKey(): string` — session segment key (namespaces `Auth::KEY`).
 
-Remember-Me Option
-------------------
+## Remember-Me Option
 
-Remember 系は **`Auth` のコンストラクタでは渡さず**、必ず **`setRememberMe()`** でまとめて設定する（DI コンテナのファクトリから `Auth` を作ったあとに束ねる想定）。
+Do **not** pass remember-me dependencies into the `Auth` constructor. Configure everything with **`setRememberMe()`** (e.g. after constructing `Auth` from a DI container factory).
 
-`RememberCookie` は HTTP クッキー（id + token）と **有効日数**（既定 7 日）を扱う。
+`RememberCookie` handles HTTP cookies (id + token) and **lifetime in days** (default 7).
 
 ```php
 use WScore\Auth\RememberAdaptor\RememberCookie;
 
 $auth = new Auth($userProvider, $session);
 
-// 本番: 30 日のブラウザ用クッキー（内部で RememberCookie::forBrowser(30)）
+// Production: 30-day browser cookie (uses RememberCookie::forBrowser(30) internally)
 $auth->setRememberMe($rememberMe, null, 30);
 
-// または明示的に組み立てた RememberCookie を渡す
+// Or pass an explicit RememberCookie
 $auth->setRememberMe($rememberMe, RememberCookie::forBrowser(30));
 
-// テスト: バッグ + setSetCookie を差し替え
+// Tests: bag + replace setSetCookie
 $bag = new \ArrayObject();
 $cookie = new RememberCookie($bag, 7);
 $cookie->setSetCookie($mockSetter);
 $auth->setRememberMe($rememberMe, $cookie);
 ```
 
-`$rememberMe` は `WScore\Auth\Contracts\RememberMeInterface`。PDO のサンプル実装は `WScore\Auth\RememberAdaptor\RememberMePdoSample`（参考用・本番は自前実装推奨）。無効化する場合は `setRememberMe(null)`。
+`$rememberMe` implements `WScore\Auth\Contracts\RememberMeInterface`. A PDO sample lives at `WScore\Auth\RememberAdaptor\RememberMePdoSample` (reference only—use your own in production). Call `setRememberMe(null)` to disable.
+
+### Advanced
+
+`setAuthSessionStore(WScore\Auth\Contracts\AuthSessionStoreInterface $store)` — replace the default `ArrayAuthSessionStore` (e.g. integration tests or a non-array session backend).
 
 Enable on login:
 
 ```php
 $auth->loginWithPassword($id, $password, true);
-// or Identity with options: new Identity(..., ['remember' => true])
+// or Identity::newPassword($id, $password, ['remember' => true])
 ```
+
+---
+
+Japanese documentation: [README.ja.md](README.ja.md).
