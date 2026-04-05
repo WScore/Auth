@@ -17,25 +17,16 @@ class RememberMePdoSample implements RememberMeInterface
      * @param PDO $pdo
      */
     public function __construct(
-        private PDO $pdo,
+        private readonly PDO $pdo,
     ) {
     }
 
-    /**
-     * @param string|int $loginId
-     * @param string $token
-     */
-    public function verifyRemember($loginId, $token): bool
+    public function verifyRemember(int|string $loginId, string $token): bool
     {
         return $this->getRemembered($loginId, $token) !== null;
     }
 
-    /**
-     * @param string|int $loginId
-     * @param string|null $token
-     * @return bool|string
-     */
-    public function generateToken($loginId, $token)
+    public function generateToken(int|string $loginId, ?string $token): bool|string
     {
         $found = $this->getRemembered($loginId, (string) $token);
         if ($found !== null) {
@@ -47,18 +38,11 @@ class RememberMePdoSample implements RememberMeInterface
         return $newToken;
     }
 
-    /**
-     * @return non-empty-string
-     */
     protected function calRememberToken(): string
     {
         return bin2hex(random_bytes(32));
     }
 
-    /**
-     * @param non-empty-string $id
-     * @param non-empty-string $token
-     */
     protected function saveIdWithToken(string $id, string $token): bool
     {
         $table = $this->table;
@@ -71,12 +55,7 @@ class RememberMePdoSample implements RememberMeInterface
         return $stmt->execute([$id, $token]);
     }
 
-    /**
-     * @param string|int $id
-     * @param string $token
-     * @return array{user_id: string, token: string}|null
-     */
-    private function getRemembered($id, string $token): ?array
+    private function getRemembered(int|string $id, string $token): ?array
     {
         $table = $this->table;
         $idCol = $this->id_name;
@@ -103,4 +82,14 @@ class RememberMePdoSample implements RememberMeInterface
 
     /** @var non-empty-string */
     protected string $token_name = 'token';
+
+    public function removeToken(int|string $loginId): void
+    {
+        $table = $this->table;
+        $idCol = $this->id_name;
+        $stmt = $this->pdo->prepare(
+        "DELETE FROM {$table} WHERE {$idCol}"
+        );
+        $stmt->execute([$loginId]);
+    }
 }

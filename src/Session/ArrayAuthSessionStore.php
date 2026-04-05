@@ -7,17 +7,14 @@ namespace WScore\Auth\Session;
 use WScore\Auth\Contracts\AuthSessionStoreInterface;
 
 /**
- * Binds auth payload to $root[$namespace][$segmentKey] (e.g. $_SESSION['WS-Auth']['my-provider']).
+ * Binds auth payload to $root[$namespace][$segmentKey] (e.g., $_SESSION['WS-Auth']['my-provider']).
  */
 final class ArrayAuthSessionStore implements AuthSessionStoreInterface
 {
-    /**
-     * @param array<mixed> $root
-     */
     public function __construct(
-        private array &$root,
-        private string $namespace,
-        private string $segmentKey,
+        private array           &$root,
+        private readonly string $namespace,
+        private readonly string $segmentKey,
     ) {
     }
 

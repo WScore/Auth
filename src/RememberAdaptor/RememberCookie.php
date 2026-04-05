@@ -21,10 +21,10 @@ class RememberCookie
     protected $setCookie = 'setcookie';
 
     /**
-     * @param array<string, mixed>|ArrayAccess<string, mixed>|null $cookie  Pass a bag for tests; null/omit uses $_COOKIE
+     * @param ArrayAccess<string, mixed>|array<string, mixed>|null $cookie  Pass a bag for tests; null/omit uses $_COOKIE
      * @param positive-int $rememberDays
      */
-    public function __construct(&$cookie = null, int $rememberDays = 7)
+    public function __construct(array|ArrayAccess &$cookie = null, int $rememberDays = 7)
     {
         $this->rememberDays = max(1, $rememberDays);
         if ($cookie) {
@@ -59,35 +59,22 @@ class RememberCookie
         return $this->rememberDays;
     }
 
-    /**
-     * @param callable|null $setter
-     */
-    public function setSetCookie($setter = null): void
+    public function setSetCookie(?callable $setter = null): void
     {
         $this->setCookie = $setter;
     }
 
-    /**
-     * @return null|string
-     */
-    public function retrieveId()
+    public function retrieveId(): ?string
     {
         return $this->get($this->name_id);
     }
 
-    /**
-     * @return null|string
-     */
-    public function retrieveToken()
+    public function retrieveToken(): ?string
     {
         return $this->get($this->token_id);
     }
 
-    /**
-     * @param string $id
-     * @param string $token
-     */
-    public function save($id, $token): void
+    public function save(string $id, string $token): void
     {
         $time = time() + 60 * 60 * 24 * $this->rememberDays;
         $func = $this->setCookie;
@@ -106,11 +93,7 @@ class RememberCookie
         $func($this->token_id, '', $time, '/', '');
     }
 
-    /**
-     * @param string $name
-     * @return null|string
-     */
-    protected function get($name)
+    protected function get(string $name): ?string
     {
         $cookie = $this->cookie;
         if ($cookie instanceof ArrayAccess) {

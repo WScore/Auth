@@ -8,7 +8,7 @@ enum AuthKind
 {
     /** ID + password (or equivalent) submitted for this request */
     case Password;
-    /** Admin / support path without credential check (gate in app code) */
+    /** Admin / support path without credential check (gate in-app code) */
     case ForceLogin;
     case OAuth;
     case OneTimeToken;

@@ -32,7 +32,7 @@ final readonly class Identity
 
     /**
      * @param Credentials $credentials
-     * @param Options $options e.g. OAuth: ['provider' => 'google'], remember: ['remember' => true]
+     * @param Options $options e.g., OAuth: ['provider' => 'google'], remember: ['remember' => true]
      */
     public function __construct(
         public AuthKind $kind,

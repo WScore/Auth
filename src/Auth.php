@@ -21,15 +21,9 @@ class Auth
 
     private AuthSessionStoreInterface $sessionStore;
 
-    /**
-     * @var array<mixed>
-     */
     private array $localSession = [];
 
-    /**
-     * @var array<mixed>
-     */
-    private $sessionRef;
+    private array $sessionRef;
 
     private ?RememberMeInterface $rememberMe = null;
 
@@ -50,7 +44,7 @@ class Auth
      */
     public function __construct(
         UserProviderInterface $userProvider,
-        &$session = null,
+        ?array                 &$session = null,
     ) {
         $this->userProvider = $userProvider;
         $this->rememberCookie = RememberCookie::forBrowser();
@@ -58,7 +52,7 @@ class Auth
     }
 
     /**
-     * Advanced: supply a custom session store (e.g. tests). Replaces array-based store.
+     * Advanced: supply a custom session store (e.g., tests). Replaces array-based store.
      */
     public function setAuthSessionStore(AuthSessionStoreInterface $store): void
     {
@@ -68,7 +62,7 @@ class Auth
     /**
      * @param array|null $session
      */
-    public function setSession(&$session = null): void
+    public function setSession(?array &$session = null): void
     {
         $this->bindSession($session);
     }
@@ -76,7 +70,7 @@ class Auth
     /**
      * @param array|null $session
      */
-    private function bindSession(&$session): void
+    private function bindSession(?array&$session): void
     {
         if ($session === null) {
             if (session_status() === PHP_SESSION_ACTIVE) {
@@ -229,9 +223,7 @@ class Auth
         if ($this->loginId && $this->rememberMe) {
             $this->rememberMe->removeToken($this->loginId);
         }
-        if ($this->rememberCookie) {
-            $this->rememberCookie->clear();
-        }
+        $this->rememberCookie?->clear();
         $this->loginId = null;
         $this->currentUser = null;
         $this->loginInfo = [];
@@ -377,9 +369,6 @@ class Auth
         return true;
     }
 
-    /**
-     * @param string|int|null $loginId
-     */
     private function persistRemember(string|int|null $loginId, ?string $existingToken = null): void
     {
         if ($this->rememberMe === null || $loginId === null) {
