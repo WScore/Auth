@@ -56,7 +56,7 @@ $ok = $auth->login(Identity::newPassword($id, $password));
 $ok = $auth->login(Identity::newOAuth('google', $googleUserId, [
     'email' => $email,
 ]));
-// UserProvider 側では credentials[Identity::PROVIDER_USER_ID_KEY] で参照
+// UserProvider 側では credentials[Identity::CREDENTIAL_PROVIDER_USER_ID] で参照
 ```
 
 Check login state:

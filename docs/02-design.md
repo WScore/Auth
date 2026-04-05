@@ -40,7 +40,7 @@ readonly class Identity {
     ) {}
 }
 
-// OAuth の例（概念）— プロバイダ固有情報の主キーは Identity::PROVIDER_USER_ID_KEY（ファクトリ newOAuth が設定）
+// OAuth の例（概念）— プロバイダ固有情報の主キーは Identity::CREDENTIAL_PROVIDER_USER_ID（ファクトリ newOAuth が設定）
 // Identity::newOAuth('google', $providerUserId, ['email' => '…'])
 ```
 

@@ -38,35 +38,35 @@ class UserList implements UserProviderInterface
 
     private function findByPassword(Identity $identity): ?object
     {
-        $id = $identity->credentials['id'] ?? null;
-        $password = $identity->credentials['password'] ?? null;
-        if (!is_string($id) && !is_int($id)) {
+        $login = $identity->credentials[Identity::CREDENTIAL_LOGIN] ?? null;
+        $password = $identity->credentials[Identity::CREDENTIAL_PASSWORD] ?? null;
+        if (!is_string($login) && !is_int($login)) {
             return null;
         }
         if (!is_string($password)) {
             return null;
         }
-        if (!$this->hasKey($id)) {
+        if (!$this->hasKey($login)) {
             return null;
         }
-        if ($this->getSecret($id) !== $password) {
+        if ($this->getSecret($login) !== $password) {
             return null;
         }
 
-        return $this->makeUser($id);
+        return $this->makeUser($login);
     }
 
     private function findByForceLogin(Identity $identity): ?object
     {
-        $id = $identity->credentials['id'] ?? null;
-        if (!is_string($id) && !is_int($id)) {
+        $userId = $identity->credentials[Identity::CREDENTIAL_FORCE_USER_ID] ?? null;
+        if (!is_string($userId) && !is_int($userId)) {
             return null;
         }
-        if (!$this->hasKey($id)) {
+        if (!$this->hasKey($userId)) {
             return null;
         }
 
-        return $this->makeUser($id);
+        return $this->makeUser($userId);
     }
 
     public function getUserId(object $user): string|int

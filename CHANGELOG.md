@@ -21,7 +21,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `Identity` named constructors: `newPassword`, `newForceLogin`, `newOAuth`, `newOneTimeToken`, `newRemember`.
-- **Breaking:** `Identity::newOAuth` is now `newOAuth(string $provider, string $providerUserId, array $extraCredentials = [], array $options = [])`; stable external id is stored as `credentials[Identity::PROVIDER_USER_ID_KEY]`.
+- **Breaking:** `Identity` credential keys are named constants (`CREDENTIAL_LOGIN`, `CREDENTIAL_PASSWORD`, `CREDENTIAL_FORCE_USER_ID`, `CREDENTIAL_PROVIDER_USER_ID`, etc.). `newPassword` uses `login` + `password`; `newForceLogin` uses `user_id`; `newRemember` uses `remember_user_id` + `remember_token`.
+- **Breaking:** `Identity::newOAuth` is now `newOAuth(string $provider, string $providerUserId, array $extraCredentials = [], array $options = [])`; stable external id is stored as `credentials[CREDENTIAL_PROVIDER_USER_ID]`.
 - `RememberCookie` moved to `WScore\Auth\RememberAdaptor\RememberCookie`. PDO sample renamed to `RememberMePdoSample` (replaces `RememberAdaptor\RememberMe`).
 - `RememberCookie::forBrowser(int $rememberDays)`, `setRememberDays` / `getRememberDays`.
 - **Breaking:** `Auth` constructor no longer takes Remember-me arguments; use `setRememberMe(?RememberMeInterface, ?RememberCookie, ?int $lifetimeDays)` only.
