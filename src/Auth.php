@@ -44,12 +44,9 @@ class Auth
     public function __construct(
         UserProviderInterface $userProvider,
         &$session = null,
-        ?RememberMeInterface $rememberMe = null,
-        ?RememberCookie $rememberCookie = null,
     ) {
         $this->userProvider = $userProvider;
-        $this->rememberMe = $rememberMe;
-        $this->rememberCookie = $rememberCookie ?? new RememberCookie();
+        $this->rememberCookie = RememberCookie::forBrowser();
         $this->bindSession($session);
     }
 
@@ -90,11 +87,21 @@ class Auth
         );
     }
 
-    public function setRememberMe(?RememberMeInterface $rememberMe, $cookie = null): void
-    {
+    /**
+     * Remember-me を有効化する（トークン保存 + クッキー）。本番ではここで DI／ファクトリから渡す想定。
+     *
+     * @param positive-int|null $rememberCookieLifetimeDays `$cookie` が null のとき `RememberCookie::forBrowser($days)` を使う（両方 null ならクッキー設定は据え置き）
+     */
+    public function setRememberMe(
+        ?RememberMeInterface $rememberMe,
+        ?RememberCookie $cookie = null,
+        ?int $rememberCookieLifetimeDays = null,
+    ): void {
         $this->rememberMe = $rememberMe;
         if ($cookie !== null) {
             $this->rememberCookie = $cookie;
+        } elseif ($rememberCookieLifetimeDays !== null) {
+            $this->rememberCookie = RememberCookie::forBrowser($rememberCookieLifetimeDays);
         }
     }
 

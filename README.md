@@ -89,13 +89,29 @@ Implement `WScore\Auth\Contracts\UserProviderInterface`:
 Remember-Me Option
 ------------------
 
+Remember 系は **`Auth` のコンストラクタでは渡さず**、必ず **`setRememberMe()`** でまとめて設定する（DI コンテナのファクトリから `Auth` を作ったあとに束ねる想定）。
+
+`RememberCookie` は HTTP クッキー（id + token）と **有効日数**（既定 7 日）を扱う。
+
 ```php
-$auth = new Auth($userProvider, $session, $rememberMe, $rememberCookie);
-// or
-$auth->setRememberMe($rememberMe, $rememberCookie);
+use WScore\Auth\RememberCookie;
+
+$auth = new Auth($userProvider, $session);
+
+// 本番: 30 日のブラウザ用クッキー（内部で RememberCookie::forBrowser(30)）
+$auth->setRememberMe($rememberMe, null, 30);
+
+// または明示的に組み立てた RememberCookie を渡す
+$auth->setRememberMe($rememberMe, RememberCookie::forBrowser(30));
+
+// テスト: バッグ + setSetCookie を差し替え
+$bag = new \ArrayObject();
+$cookie = new RememberCookie($bag, 7);
+$cookie->setSetCookie($mockSetter);
+$auth->setRememberMe($rememberMe, $cookie);
 ```
 
-`$rememberMe` implements `WScore\Auth\Contracts\RememberMeInterface`.
+`$rememberMe` は `WScore\Auth\Contracts\RememberMeInterface`。無効化する場合は `setRememberMe(null)`。
 
 Enable on login:
 

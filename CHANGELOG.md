@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `RememberCookie::forBrowser(int $rememberDays)`, `setRememberDays` / `getRememberDays`.
+- **Breaking:** `Auth` constructor no longer takes Remember-me arguments; use `setRememberMe(?RememberMeInterface, ?RememberCookie, ?int $lifetimeDays)` only.
 - `AuthKind` enum, `Identity` value object.
 - `loginWithPassword()`, `user()` (and `getLoginUser()` as alias).
 

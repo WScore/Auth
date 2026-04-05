@@ -1,27 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WScore\Auth;
 
 use ArrayAccess;
 
 class RememberCookie
 {
-    protected $name_id = 'remember-id';
+    protected string $name_id = 'remember-id';
 
-    protected $token_id = 'remember-me';
+    protected string $token_id = 'remember-me';
 
-    /** @var array|ArrayAccess */
-    protected $cookie = array();
+    /** @var array<string, mixed>|ArrayAccess<string, mixed> */
+    protected array|ArrayAccess $cookie;
 
-    protected $rememberDays = 7;
+    protected int $rememberDays;
 
+    /** @var callable|null */
     protected $setCookie = 'setcookie';
 
     /**
-     * @param array $cookie
+     * @param array<string, mixed>|ArrayAccess<string, mixed>|null $cookie  Pass a bag for tests; null/omit uses $_COOKIE
+     * @param positive-int $rememberDays
      */
-    public function __construct(&$cookie = array())
+    public function __construct(&$cookie = null, int $rememberDays = 7)
     {
+        $this->rememberDays = max(1, $rememberDays);
         if ($cookie) {
             $this->cookie = &$cookie;
         } else {
@@ -30,9 +35,34 @@ class RememberCookie
     }
 
     /**
-     * @param null|string $setter
+     * Remember-me cookie against superglobals (typical production use).
+     *
+     * @param positive-int $rememberDays
      */
-    public function setSetCookie($setter = null)
+    public static function forBrowser(int $rememberDays = 7): self
+    {
+        $unused = null;
+
+        return new self($unused, $rememberDays);
+    }
+
+    /**
+     * @param positive-int $days
+     */
+    public function setRememberDays(int $days): void
+    {
+        $this->rememberDays = max(1, $days);
+    }
+
+    public function getRememberDays(): int
+    {
+        return $this->rememberDays;
+    }
+
+    /**
+     * @param callable|null $setter
+     */
+    public function setSetCookie($setter = null): void
     {
         $this->setCookie = $setter;
     }
@@ -57,7 +87,7 @@ class RememberCookie
      * @param string $id
      * @param string $token
      */
-    public function save($id, $token)
+    public function save($id, $token): void
     {
         $time = time() + 60 * 60 * 24 * $this->rememberDays;
         $func = $this->setCookie;
@@ -78,5 +108,4 @@ class RememberCookie
 
         return array_key_exists($name, $cookie) ? $cookie[$name] : null;
     }
-
 }
