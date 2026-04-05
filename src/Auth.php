@@ -124,17 +124,12 @@ class Auth
     {
         $options = $remember ? ['remember' => true] : [];
 
-        return $this->login(new Identity(AuthKind::Password, [
-            'id' => $loginId,
-            'password' => $password,
-        ], $options));
+        return $this->login(Identity::newPassword($loginId, $password, $options));
     }
 
     public function forceLogin(string $loginId): bool
     {
-        return $this->login(new Identity(AuthKind::ForceLogin, [
-            'id' => $loginId,
-        ]));
+        return $this->login(Identity::newForceLogin($loginId));
     }
 
     /**

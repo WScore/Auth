@@ -48,12 +48,14 @@ if ($auth->loginWithPassword($id, $password)) {
 Or with an `Identity` value object:
 
 ```php
-use WScore\Auth\AuthKind;
 use WScore\Auth\Identity;
 
-$ok = $auth->login(new Identity(AuthKind::Password, [
-    'id' => $id,
-    'password' => $password,
+$ok = $auth->login(Identity::newPassword($id, $password));
+
+// OAuth example
+$ok = $auth->login(Identity::newOAuth('google', [
+    'sub' => $sub,
+    'email' => $email,
 ]));
 ```
 

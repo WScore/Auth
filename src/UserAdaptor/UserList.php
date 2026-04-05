@@ -32,7 +32,7 @@ class UserList implements UserProviderInterface
         return match ($identity->kind) {
             AuthKind::Password => $this->findByPassword($identity),
             AuthKind::ForceLogin => $this->findByForceLogin($identity),
-            AuthKind::OAuth, AuthKind::OneTimeToken => null,
+            AuthKind::OAuth, AuthKind::OneTimeToken, AuthKind::Remember => null,
         };
     }
 
