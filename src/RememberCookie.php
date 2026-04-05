@@ -2,12 +2,15 @@
 
 namespace WScore\Auth;
 
+use ArrayAccess;
+
 class RememberCookie
 {
     protected $name_id = 'remember-id';
 
     protected $token_id = 'remember-me';
 
+    /** @var array|ArrayAccess */
     protected $cookie = array();
 
     protected $rememberDays = 7;
@@ -68,7 +71,12 @@ class RememberCookie
      */
     protected function get($name)
     {
-        return array_key_exists($name, $this->cookie) ? $this->cookie[$name] : null;
+        $cookie = $this->cookie;
+        if ($cookie instanceof ArrayAccess) {
+            return $cookie->offsetExists($name) ? $cookie[$name] : null;
+        }
+
+        return array_key_exists($name, $cookie) ? $cookie[$name] : null;
     }
 
 }

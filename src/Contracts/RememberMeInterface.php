@@ -1,6 +1,6 @@
 <?php
 
-namespace WScore\Auth;
+namespace WScore\Auth\Contracts;
 
 interface RememberMeInterface
 {

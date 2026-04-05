@@ -2,7 +2,7 @@
 
 namespace tests\Auth\mocks;
 
-use WScore\Auth\RememberMeInterface;
+use WScore\Auth\Contracts\RememberMeInterface;
 
 class RememberMock implements RememberMeInterface
 {

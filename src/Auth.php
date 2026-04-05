@@ -2,6 +2,9 @@
 
 namespace WScore\Auth;
 
+use WScore\Auth\Contracts\RememberMeInterface;
+use WScore\Auth\Contracts\UserProviderInterface;
+
 class Auth
 {
     const KEY = 'WS-Auth';

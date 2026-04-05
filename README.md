@@ -20,7 +20,7 @@ composer require "wscore/auth: ^0.3"
 Getting Started
 --------------
 
-`Auth` requires `UserProviderInterface` object to access to user information. 
+`Auth` requires a `UserProviderInterface` (`WScore\Auth\Contracts`) object to access to user information. 
 
 ```php
 $auth = new Auth(new UserProvider);
@@ -66,7 +66,7 @@ $auth->isLoginBy(Auth::BY_FORCED); // check for login method.
 UserProvider
 ------------
 
-The `Auth` requires a user provider object implementing `UserProviderInterface`. 
+The `Auth` requires a user provider object implementing `WScore\Auth\Contracts\UserProviderInterface`. 
 The interface has 4 APIs; that are
 
 * `getUserById($id)`: for retrieving a user entity for `$id` (a login user). 
@@ -83,7 +83,7 @@ $auth = new Auth(...);
 $auth->setRememberMe(new MyRememberMe());
 ```
 
-* `$remember` object implementing `RememberMeInterface`, 
+* `$remember` object implementing `WScore\Auth\Contracts\RememberMeInterface`, 
 * `RememberCookie` object, 
 
 then, when login, supply 3rd argument when `login` as

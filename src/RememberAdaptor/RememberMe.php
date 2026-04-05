@@ -3,7 +3,7 @@
 namespace WScore\Auth\RememberAdaptor;
 
 use PDO;
-use WScore\Auth\RememberMeInterface;
+use WScore\Auth\Contracts\RememberMeInterface;
 
 class RememberMe implements RememberMeInterface
 {

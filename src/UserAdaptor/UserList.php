@@ -2,21 +2,35 @@
 
 namespace WScore\Auth\UserAdaptor;
 
-use WScore\Auth\UserProviderInterface;
+use ArrayAccess;
+use WScore\Auth\Contracts\UserProviderInterface;
 
 class UserList implements UserProviderInterface
 {
     /**
-     * @var array
+     * @var array|ArrayAccess
      */
     private $idList;
 
     /**
-     * @param array $idList
+     * @param array|ArrayAccess $idList
      */
     public function __construct($idList)
     {
         $this->idList = $idList;
+    }
+
+    /**
+     * @param array|ArrayAccess $container
+     * @param string|int $key
+     */
+    private function hasKey($container, $key): bool
+    {
+        if ($container instanceof ArrayAccess) {
+            return $container->offsetExists($key);
+        }
+
+        return array_key_exists($key, $container);
     }
 
     /**
@@ -39,7 +53,7 @@ class UserList implements UserProviderInterface
      */
     public function getUserById($loginId)
     {
-        if (array_key_exists($loginId, $this->idList)) {
+        if ($this->hasKey($this->idList, $loginId)) {
             return $this->idList[$loginId];
         }
         return null;
@@ -56,7 +70,7 @@ class UserList implements UserProviderInterface
      */
     public function getUserByIdAndPw($loginId, $password)
     {
-        if (!array_key_exists($loginId, $this->idList)) {
+        if (!$this->hasKey($this->idList, $loginId)) {
             return null;
         }
         if ($this->idList[$loginId] === $password) {
