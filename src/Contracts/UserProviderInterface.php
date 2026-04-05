@@ -1,34 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WScore\Auth\Contracts;
+
+use WScore\Auth\Identity;
 
 interface UserProviderInterface
 {
     /**
-     * returns user type token string to identify the
-     * user when using multiple user object.
-     *
-     * @return string
+     * Resolves an {@see Identity} to a user object, or null if authentication fails.
      */
-    public function getUserType();
+    public function findByIdentity(Identity $identity): ?object;
 
     /**
-     * returns user data based on user $id.
-     * must return NULL if no $id exists for login.
-     *
-     * @param string|int $loginId
-     * @return mixed|null
+     * Stable id stored in session / remember-me (must match {@see findById}).
      */
-    public function getUserById($loginId);
+    public function getUserId(object $user): string|int;
+
+    public function findById(string|int $userId): ?object;
 
     /**
-     * returns user data based on user $id with
-     * valid $pw (password).
-     * must return NULL if no $id exists or $pw is invalidated.
+     * Isolates session storage when multiple providers exist (segment key under {@see \WScore\Auth\Auth::KEY}).
      *
-     * @param string|int $loginId
-     * @param string $password
-     * @return mixed|null
+     * @return non-empty-string
      */
-    public function getUserByIdAndPw($loginId, $password);
+    public function getProviderKey(): string;
 }

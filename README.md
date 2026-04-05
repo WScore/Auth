@@ -1,95 +1,101 @@
 WScore.Auth
 ===========
 
-A simple authentication package.
+**v2** は `Identity` と `UserProviderInterface` を中心にした設計です。
+
+以前の **0.x 系（ベータ相当）とは API が互換ではありません。** アップグレードは実装の載せ替えを前提にしてください。破壊的変更を許容してよい前提で進めています。
 
 ### License
 
 MIT License
 
-### PSR 
+### PSR
 
 PSR-1, PSR-2, and PSR-4.
+
+### Requirements
+
+PHP 8.2+
 
 ### Installation
 
 ```sh
-composer require "wscore/auth: ^0.3"
+composer require "wscore/auth:^2.0"
 ```
+
+（v2 リリース前は VCS / `@dev` / プレリリースタグに合わせて制約を指定してください。）
 
 Getting Started
 --------------
 
-`Auth` requires a `UserProviderInterface` (`WScore\Auth\Contracts`) object to access to user information. 
+`Auth` requires a `UserProviderInterface` (`WScore\Auth\Contracts`) implementation.
 
 ```php
-$auth = new Auth(new UserProvider);
+$auth = new Auth($userProvider);
+$auth->setSession($session); // optional; default is active `$_SESSION` or an internal array
 ```
 
-To authenticate a user, get user-id (`$id`) and user-password (`$pw`) from a login form, and 
+Password login (convenience):
 
 ```php
-if ($auth->login($id, $pw)) {
+use WScore\Auth\Auth;
+
+if ($auth->loginWithPassword($id, $password)) {
     echo 'login success!';
 }
 ```
 
-to check for login later on, 
+Or with an `Identity` value object:
+
+```php
+use WScore\Auth\AuthKind;
+use WScore\Auth\Identity;
+
+$ok = $auth->login(new Identity(AuthKind::Password, [
+    'id' => $id,
+    'password' => $password,
+]));
+```
+
+Check login state:
 
 ```php
 $auth->isLogin();
-```
-
-You can retrieve login information such as;
-
-```php
-$user = $auth->getLoginUser(); // login user entity returned by UserProvider's getUserInfo() method.
-$mail = $auth->getLoginId(); // get login user's id. maybe an email? 
+$user = $auth->user();
+$id = $auth->getLoginId();
 ```
 
 ### Force Login
 
-`forceLogin` method allow to login as a user *without* a password, 
-for purposes, such as system administration. 
-
 ```php
 $auth->forceLogin($id);
+$auth->isLoginBy(Auth::BY_FORCED);
 ```
-
-then, you can check if the login is force or not. 
-
-```php
-$auth->isLoginBy(Auth::BY_FORCED); // check for login method. 
-```
-
 
 UserProvider
 ------------
 
-The `Auth` requires a user provider object implementing `WScore\Auth\Contracts\UserProviderInterface`. 
-The interface has 4 APIs; that are
+Implement `WScore\Auth\Contracts\UserProviderInterface`:
 
-* `getUserById($id)`: for retrieving a user entity for `$id` (a login user). 
-* `getUserByIdAndPw($id, $pw)`: for retrieving a user entity for `$id` and valid `$pw`. 
-* `getUserType()`: for retrieving a key-string to identify the user-provider. 
+* `findByIdentity(Identity $identity): ?object` — resolve and verify credentials.
+* `getUserId(object $user): string|int` — id stored in session.
+* `findById(string|int $userId): ?object` — restore user from that id.
+* `getProviderKey(): string` — session segment key (namespaces `Auth::KEY`).
 
 Remember-Me Option
 ------------------
 
-To use Remember-me option, use `setRememberMe` method, as 
-
 ```php
-$auth = new Auth(...);
-$auth->setRememberMe(new MyRememberMe());
+$auth = new Auth($userProvider, $session, $rememberMe, $rememberCookie);
+// or
+$auth->setRememberMe($rememberMe, $rememberCookie);
 ```
 
-* `$remember` object implementing `WScore\Auth\Contracts\RememberMeInterface`, 
-* `RememberCookie` object, 
+`$rememberMe` implements `WScore\Auth\Contracts\RememberMeInterface`.
 
-then, when login, supply 3rd argument when `login` as
- 
+Enable on login:
+
 ```php
-$auth->login($id, $pw, true);
+$auth->loginWithPassword($id, $password, true);
+// or Identity with options: new Identity(..., ['remember' => true])
 ```
-
-to save the `$id` and a remember-me token to cookie if login is successful. 

@@ -1,35 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         backupGlobals="true"
-         backupStaticAttributes="false"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.0/phpunit.xsd"
          bootstrap="autoloader.php"
-         cacheResult="false"
-         cacheTokens="false"
-         colors="false"
-         convertErrorsToExceptions="true"
-         convertNoticesToExceptions="true"
-         convertWarningsToExceptions="true"
-         forceCoversAnnotation="false"
-         printerClass="PHPUnit\TextUI\ResultPrinter"
-         processIsolation="false"
-         stopOnError="false"
-         stopOnFailure="false"
-         stopOnIncomplete="false"
-         stopOnSkipped="false"
-         stopOnRisky="false"
-         testSuiteLoaderClass="PHPUnit\Runner\StandardTestSuiteLoader"
-         timeoutForSmallTests="1"
-         timeoutForMediumTests="10"
-         timeoutForLargeTests="60"
->
+         colors="true"
+         cacheDirectory=".phpunit.cache"
+         backupGlobals="true">
     <testsuites>
-        <testsuite name="WScore/Pile Test Suite">
+        <testsuite name="WScore Auth">
             <directory>Auth</directory>
         </testsuite>
     </testsuites>
-    <filter>
-        <whitelist processUncoveredFilesFromWhitelist="true">
+    <source>
+        <include>
             <directory suffix=".php">../src</directory>
-        </whitelist>
-    </filter>
+        </include>
+    </source>
 </phpunit>

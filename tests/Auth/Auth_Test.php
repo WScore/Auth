@@ -1,223 +1,202 @@
 <?php
 
+declare(strict_types=1);
+
 namespace tests\Auth;
 
 use PHPUnit\Framework\TestCase;
 use tests\Auth\mocks\SimpleUserList;
 use WScore\Auth\Auth;
 
-require_once(dirname(__DIR__) . '/autoloader.php');
+require_once dirname(__DIR__) . '/autoloader.php';
 
 class Auth_Test extends TestCase
 {
-    var $idList = array();
+    /** @var array<string, string> */
+    public array $idList = [];
 
-    /**
-     * @var SimpleUserList
-     */
-    var $user;
+    public SimpleUserList $user;
 
-    /**
-     * @var Auth
-     */
-    var $auth;
+    public Auth $auth;
 
-    var $session = array();
+    /** @var array<mixed> */
+    public array $session = [];
 
-    var $user_save_id;
+    public string $user_save_id;
 
-    function setup(): void
+    protected function setUp(): void
     {
-        $this->idList = array(
+        $this->idList = [
             'test' => 'test-PW',
             'more' => 'more-PW',
-        );
+        ];
         $this->user = new SimpleUserList($this->idList);
-        $this->user_save_id = 'Type:' . $this->user->getUserType();
+        $this->user_save_id = $this->user->getProviderKey();
         $this->auth = new Auth($this->user);
         $this->auth->setSession($this->session);
     }
 
-    function test0()
+    public function test0(): void
     {
-        $this->assertEquals('tests\Auth\mocks\SimpleUserList', get_class($this->user));
-        $this->assertEquals('WScore\Auth\Auth', get_class($this->auth));
-        $this->assertEquals('tests\Auth\mocks\SimpleUserList', get_class($this->auth->getUserProvider()));
+        $this->assertEquals('tests\Auth\mocks\SimpleUserList', $this->user::class);
+        $this->assertEquals(Auth::class, $this->auth::class);
+        $this->assertEquals('tests\Auth\mocks\SimpleUserList', $this->auth->getUserProvider()::class);
     }
 
-    // +----------------------------------------------------------------------+
-    // +----------------------------------------------------------------------+
     /**
      * @test
      */
-    function login_successful_using_post_input()
+    public function login_successful_using_post_input(): void
     {
-        $authOK = $this->auth->login('test', 'test-PW');
+        $authOK = $this->auth->loginWithPassword('test', 'test-PW');
 
-        // test auth status
-        $this->assertEquals(true, $authOK);
-        $this->assertEquals(true, $this->auth->isLogin());
+        $this->assertTrue($authOK);
+        $this->assertTrue($this->auth->isLogin());
 
-        // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
 
-        // test
         $this->assertTrue($this->auth->isLoginBy(Auth::BY_POST));
         $this->assertEquals('test', $this->auth->getLoginId());
 
-        // directly test the session data.
         $this->assertNotEmpty($loginInfo);
         $this->assertEquals('test', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
         $this->assertEquals(Auth::BY_POST, $loginInfo['loginBy']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $this->auth->getLoginUser());
+        $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
 
-        // test what's saved in the session.
         $this->assertNotEmpty($this->session);
         $this->assertArrayHasKey($this->user_save_id, $this->session[Auth::KEY]);
         $saved = $this->session[Auth::KEY][$this->user_save_id];
-        $this->assertEquals('test', $saved['loginId']);
+        $this->assertEquals('test', $saved['userId']);
         $this->assertArrayHasKey('time', $saved);
         $this->assertEquals(Auth::BY_POST, $saved['loginBy']);
-        $this->assertEquals('SimpleUserList', $saved['type']);
-        $this->assertEquals('test-PW', $this->auth->getLoginUser());
+        $this->assertEquals('SimpleUserList', $saved['providerKey']);
+        $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
     }
 
     /**
      * @test
      */
-    function login_successful_if_remember_flag_is_true_but_no_rememberMe()
+    public function login_successful_if_remember_flag_is_true_but_no_rememberMe(): void
     {
-        $authOK = $this->auth->login('test', 'test-PW', true);
+        $authOK = $this->auth->loginWithPassword('test', 'test-PW', true);
 
-        // test auth status
-        $this->assertEquals(true, $authOK);
-        $this->assertEquals(true, $this->auth->isLogin());
+        $this->assertTrue($authOK);
+        $this->assertTrue($this->auth->isLogin());
 
-        // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
         $this->assertNotEmpty($loginInfo);
         $this->assertEquals('test', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
         $this->assertEquals(Auth::BY_POST, $loginInfo['loginBy']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $this->auth->getLoginUser());
+        $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
 
-        // test what's saved in the session.
         $this->assertNotEmpty($this->session);
         $this->assertArrayHasKey($this->user_save_id, $this->session[Auth::KEY]);
         $saved = $this->session[Auth::KEY][$this->user_save_id];
-        $this->assertEquals('test', $saved['loginId']);
+        $this->assertEquals('test', $saved['userId']);
         $this->assertArrayHasKey('time', $saved);
         $this->assertEquals(Auth::BY_POST, $saved['loginBy']);
-        $this->assertEquals('SimpleUserList', $saved['type']);
-        $this->assertEquals('test-PW', $this->auth->getLoginUser());
+        $this->assertEquals('SimpleUserList', $saved['providerKey']);
+        $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
     }
 
     /**
      * @test
      */
-    function login_fails_for_bad_id()
+    public function login_fails_for_bad_id(): void
     {
-        $authOK = $this->auth->login('bad', 'bad-PW');
+        $authOK = $this->auth->loginWithPassword('bad', 'bad-PW');
 
-        // test auth status
-        $this->assertEquals(false, $authOK);
-        $this->assertEquals(false, $this->auth->isLogin());
+        $this->assertFalse($authOK);
+        $this->assertFalse($this->auth->isLogin());
 
-        // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
         $this->assertEmpty($loginInfo);
 
-        // test what's saved in the session.
         $this->assertEquals(0, count($this->session));
     }
 
     /**
      * @test
      */
-    function login_fails_for_bad_pw()
+    public function login_fails_for_bad_pw(): void
     {
-        $authOK = $this->auth->login('test', 'bad-PW');
+        $authOK = $this->auth->loginWithPassword('test', 'bad-PW');
 
-        // test auth status
-        $this->assertEquals(false, $authOK);
-        $this->assertEquals(false, $this->auth->isLogin());
+        $this->assertFalse($authOK);
+        $this->assertFalse($this->auth->isLogin());
 
-        // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
         $this->assertEmpty($loginInfo);
 
-        // test what's saved in the session.
         $this->assertEquals(0, count($this->session));
     }
 
     /**
      * @test
      */
-    function isLoggedIn_authenticates_using_session_data()
+    public function isLoggedIn_authenticates_using_session_data(): void
     {
-        // login with valid input (id/pw), and get the loginInfo.
-        $this->auth->login('test', 'test-PW');
+        $this->auth->loginWithPassword('test', 'test-PW');
         $loginInfo = $this->auth->getLoginInfo();
 
-        // set the loginInfo into the session.
         $session = [
-            Auth::KEY => [$this->user_save_id => $loginInfo],
+            Auth::KEY => [
+                $this->user_save_id => [
+                    'userId' => 'test',
+                    'providerKey' => 'SimpleUserList',
+                    'loginKind' => 'Password',
+                    'loginBy' => Auth::BY_POST,
+                    'time' => $loginInfo['time'],
+                ],
+            ],
         ];
         $auth = new Auth($this->user);
         $auth->setSession($session);
 
-        // OK. now let's login without input.
         $authOK = $auth->isLogin();
 
-        // test auth status
-        $this->assertEquals(true, $authOK);
-        $this->assertEquals(true, $auth->isLogin());
+        $this->assertTrue($authOK);
+        $this->assertTrue($auth->isLogin());
 
-
-        // get loginInfo
         $loginInfo = $auth->getLoginInfo();
         $this->assertNotEmpty($loginInfo);
         $this->assertEquals('test', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
-        $this->assertEquals('test', $loginInfo['loginId']);
         $this->assertEquals(Auth::BY_POST, $loginInfo['loginBy']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $this->auth->getLoginUser());
+        $this->assertEquals('test-PW', $auth->getLoginUser()->secret);
     }
 
     /**
      * @test
      */
-    function forceLogin_successfully()
+    public function forceLogin_successfully(): void
     {
         $authOK = $this->auth->forceLogin('test');
-        // test auth status
-        $this->assertEquals(true, $authOK);
-        $this->assertEquals(true, $this->auth->isLogin());
+        $this->assertTrue($authOK);
+        $this->assertTrue($this->auth->isLogin());
 
-
-        // get loginInfo
         $loginInfo = $this->auth->getLoginInfo();
         $this->assertNotEmpty($loginInfo);
         $this->assertEquals('test', $loginInfo['loginId']);
         $this->assertArrayHasKey('time', $loginInfo);
         $this->assertEquals(Auth::BY_FORCED, $loginInfo['loginBy']);
         $this->assertEquals('SimpleUserList', $loginInfo['type']);
-        $this->assertEquals('test-PW', $this->auth->getLoginUser());
+        $this->assertEquals('test-PW', $this->auth->getLoginUser()->secret);
     }
 
     /**
      * @test
      */
-    function forceLogin_fails_for_bad_id()
+    public function forceLogin_fails_for_bad_id(): void
     {
         $authOK = $this->auth->forceLogin('bad');
-        // test auth status
-        $this->assertEquals(false, $authOK);
-        $this->assertEquals(false, $this->auth->isLogin());
+        $this->assertFalse($authOK);
+        $this->assertFalse($this->auth->isLogin());
         $loginInfo = $this->auth->getLoginInfo();
         $this->assertEmpty($loginInfo);
     }
@@ -225,17 +204,16 @@ class Auth_Test extends TestCase
     /**
      * @test
      */
-    function logout_()
+    public function logout_(): void
     {
-        $authOK = $this->auth->login('test', 'test-PW');
+        $authOK = $this->auth->loginWithPassword('test', 'test-PW');
 
-        // test auth status
-        $this->assertEquals(true, $authOK);
-        $this->assertEquals(true, $this->auth->isLogin());
+        $this->assertTrue($authOK);
+        $this->assertTrue($this->auth->isLogin());
 
         $this->auth->logout();
-        $this->assertEquals(false, $this->auth->isLogin());
+        $this->assertFalse($this->auth->isLogin());
         $this->assertEmpty($this->auth->getLoginInfo());
-        $this->assertEmpty($this->auth->getLoginUser());
+        $this->assertNull($this->auth->getLoginUser());
     }
 }
