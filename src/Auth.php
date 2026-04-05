@@ -7,6 +7,7 @@ namespace WScore\Auth;
 use WScore\Auth\Contracts\AuthSessionStoreInterface;
 use WScore\Auth\Contracts\RememberMeInterface;
 use WScore\Auth\Contracts\UserProviderInterface;
+use WScore\Auth\RememberAdaptor\RememberCookie;
 use WScore\Auth\Session\ArrayAuthSessionStore;
 
 class Auth

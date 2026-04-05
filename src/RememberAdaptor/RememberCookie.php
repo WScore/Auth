@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace WScore\Auth;
+namespace WScore\Auth\RememberAdaptor;
 
 use ArrayAccess;
 

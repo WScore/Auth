@@ -11,7 +11,7 @@ use tests\Auth\mocks\RememberMock;
 use tests\Auth\mocks\SimpleUserList;
 use WScore\Auth\Auth;
 use WScore\Auth\AuthKind;
-use WScore\Auth\RememberCookie;
+use WScore\Auth\RememberAdaptor\RememberCookie;
 
 require_once dirname(__DIR__) . '/autoloader.php';
 

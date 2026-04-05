@@ -94,7 +94,7 @@ Remember 系は **`Auth` のコンストラクタでは渡さず**、必ず **`s
 `RememberCookie` は HTTP クッキー（id + token）と **有効日数**（既定 7 日）を扱う。
 
 ```php
-use WScore\Auth\RememberCookie;
+use WScore\Auth\RememberAdaptor\RememberCookie;
 
 $auth = new Auth($userProvider, $session);
 
@@ -111,7 +111,7 @@ $cookie->setSetCookie($mockSetter);
 $auth->setRememberMe($rememberMe, $cookie);
 ```
 
-`$rememberMe` は `WScore\Auth\Contracts\RememberMeInterface`。無効化する場合は `setRememberMe(null)`。
+`$rememberMe` は `WScore\Auth\Contracts\RememberMeInterface`。PDO のサンプル実装は `WScore\Auth\RememberAdaptor\RememberMePdoSample`（参考用・本番は自前実装推奨）。無効化する場合は `setRememberMe(null)`。
 
 Enable on login:
 
