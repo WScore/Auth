@@ -1,95 +1,169 @@
 WScore.Auth
 ===========
 
-A simple authentication package.
+**v2** is built around `Identity` and `UserProviderInterface`.
+
+It is **not API-compatible** with earlier **0.x (beta-era)** releases. Treat upgrades as a rewrite; breaking changes are expected.
 
 ### License
 
 MIT License
 
-### PSR 
+### PSR
 
 PSR-1, PSR-2, and PSR-4.
+
+### Requirements
+
+PHP 8.2+
 
 ### Installation
 
 ```sh
-composer require "wscore/auth: ^0.3"
+composer require "wscore/auth:^2.0"
 ```
+
+Before v2 is tagged on Packagist, pin VCS / `@dev` / pre-release tags as needed.
 
 Getting Started
 --------------
 
-`Auth` requires `UserProviderInterface` object to access to user information. 
+`Auth` requires a `UserProviderInterface` (`WScore\Auth\Contracts`) implementation.
 
 ```php
-$auth = new Auth(new UserProvider);
+$auth = new Auth($userProvider);
+$auth->setSession($session); // optional; default is active `$_SESSION` or an internal array
 ```
 
-To authenticate a user, get user-id (`$id`) and user-password (`$pw`) from a login form, and 
+Password login (convenience):
 
 ```php
-if ($auth->login($id, $pw)) {
+use WScore\Auth\Auth;
+
+if ($auth->loginWithPassword($id, $password)) {
     echo 'login success!';
 }
 ```
 
-to check for login later on, 
+Or with an `Identity` value object:
+
+```php
+use WScore\Auth\Identity;
+
+$ok = $auth->login(Identity::newPassword($id, $password));
+
+// OAuth: provider user id (extract sub / id from raw responses in your bridge)
+$ok = $auth->login(Identity::newOAuth('google', $googleUserId, [
+    'email' => $email,
+]));
+// In UserProvider, read credentials[Identity::CREDENTIAL_PROVIDER_USER_ID]
+```
+
+Check login state:
 
 ```php
 $auth->isLogin();
+$user = $auth->user();
+$id = $auth->getLoginId();
+$auth->getUserProvider(); // the UserProviderInterface instance
 ```
 
-You can retrieve login information such as;
+`user()` resolves in order: in-memory cache → session → remember-me cookie (if `setRememberMe` was configured).
+
+**Note:** Calling `isLogin()` or `user()` may trigger an automatic login attempt via remember-me cookies if no active session exists. This can result in new cookies being sent or backend tokens being rotated.
 
 ```php
-$user = $auth->getLoginUser(); // login user entity returned by UserProvider's getUserInfo() method.
-$mail = $auth->getLoginId(); // get login user's id. maybe an email? 
+$auth->logout(); // clears session segment, in-memory state, and remember-me cookies/tokens.
 ```
+
+### Timeouts
+
+You can configure automatic logout based on the time elapsed since initial login (absolute timeout) or since the last access (activity timeout).
+
+```php
+// Invalidate after 1 hour from initial login
+$auth->setAbsoluteTimeout(3600);
+
+// Invalidate after 15 minutes of inactivity
+$auth->setActivityTimeout(900);
+```
+
+When a timeout is detected, `logout()` is automatically called during `isLogin()` or `user()`.
+
+### AuthKind
+
+`getLoginInfo()['kind']` and `isLoginBy()` use `WScore\Auth\AuthKind`: `Password`, `ForceLogin`, `OAuth`, `OneTimeToken`, `Remember`.
+
+- **`Remember`** — the session was established via remember-me cookie validation (no password submitted on this login). This differs from password login with the “remember me” box checked, which stays **`Password`**.
+- Use `isLoginBy(AuthKind::Remember)` (or inspect `getLoginInfo()['kind']`) to distinguish that path from interactive logins.
+
+Other `Identity` constructors: `Identity::newForceLogin`, `Identity::newOneTimeToken`, `Identity::newRemember` (for providers that resolve remember pairs in `findByIdentity`).
 
 ### Force Login
 
-`forceLogin` method allow to login as a user *without* a password, 
-for purposes, such as system administration. 
-
 ```php
+use WScore\Auth\AuthKind;
+
 $auth->forceLogin($id);
+$auth->isLoginBy(AuthKind::ForceLogin);
 ```
 
-then, you can check if the login is force or not. 
+`getLoginInfo()` includes `kind` (`AuthKind`), `loginId`, `type` (provider key), `time`.
+
+## UserProvider
+
+Implement `WScore\Auth\Contracts\UserProviderInterface`:
+
+* `findByIdentity(Identity $identity): ?object` — resolve and verify credentials.
+* `getUserId(object $user): string|int` — id stored in session.
+* `findById(string|int $userId): ?object` — restore user from that id.
+* `getProviderKey(): string` — session segment key (namespaces `Auth::KEY`).
+
+## Remember-Me Option
+
+Do **not** pass remember-me dependencies into the `Auth` constructor. Configure everything with **`setRememberMe()`** (e.g. after constructing `Auth` from a DI container factory).
+
+`RememberCookie` handles HTTP cookies (id + token) and **lifetime in days** (default 7).
 
 ```php
-$auth->isLoginBy(Auth::BY_FORCED); // check for login method. 
+use WScore\Auth\RememberAdaptor\RememberCookie;
+
+$auth = new Auth($userProvider, $session);
+
+// Production: 30-day browser cookie (uses RememberCookie::forBrowser(30) internally)
+$auth->setRememberMe($rememberMe, null, 30);
+
+// Or pass an explicit RememberCookie
+$auth->setRememberMe($rememberMe, RememberCookie::forBrowser(30));
+
+// Tests: bag + replace setSetCookie
+$bag = new \ArrayObject();
+$cookie = new RememberCookie($bag, 7);
+$cookie->setSetCookie($mockSetter);
+$auth->setRememberMe($rememberMe, $cookie);
 ```
 
+`$rememberMe` implements `WScore\Auth\Contracts\RememberMeInterface`. A PDO sample lives at `WScore\Auth\RememberAdaptor\RememberMePdoSample` (reference only—use your own in production). Call `setRememberMe(null)` to disable.
 
-UserProvider
-------------
+### Advanced
 
-The `Auth` requires a user provider object implementing `UserProviderInterface`. 
-The interface has 4 APIs; that are
+`setAuthSessionStore(WScore\Auth\Contracts\AuthSessionStoreInterface $store)` — replace the default `ArrayAuthSessionStore` (e.g. integration tests or a non-array session backend).
 
-* `getUserById($id)`: for retrieving a user entity for `$id` (a login user). 
-* `getUserByIdAndPw($id, $pw)`: for retrieving a user entity for `$id` and valid `$pw`. 
-* `getUserType()`: for retrieving a key-string to identify the user-provider. 
+#### Session Regeneration
 
-Remember-Me Option
-------------------
-
-To use Remember-me option, use `setRememberMe` method, as 
+By default, `Auth::login()` calls `session_regenerate_id(true)` for security (session fixation prevention). However, this can cause session loss on unstable networks or specific browser environments. You can disable this behavior if needed:
 
 ```php
-$auth = new Auth(...);
-$auth->setRememberMe(new MyRememberMe());
+$auth->setRegenerateSessionOnLogin(false);
 ```
 
-* `$remember` object implementing `RememberMeInterface`, 
-* `RememberCookie` object, 
+Enable on login:
 
-then, when login, supply 3rd argument when `login` as
- 
 ```php
-$auth->login($id, $pw, true);
+$auth->loginWithPassword($id, $password, true);
+// or Identity::newPassword($id, $password, ['remember' => true])
 ```
 
-to save the `$id` and a remember-me token to cookie if login is successful. 
+---
+
+Japanese documentation: [README.ja.md](README.ja.md).

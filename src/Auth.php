@@ -1,326 +1,382 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WScore\Auth;
+
+use WScore\Auth\Contracts\AuthSessionStoreInterface;
+use WScore\Auth\Contracts\RememberMeInterface;
+use WScore\Auth\Contracts\UserProviderInterface;
+use WScore\Auth\RememberAdaptor\RememberCookie;
+use WScore\Auth\Session\ArrayAuthSessionStore;
 
 class Auth
 {
-    const KEY = 'WS-Auth';
+    public const KEY = 'WS-Auth';
 
-    const AUTH_NONE = 0;
-    const AUTH_OK = 1;
-    const AUTH_FAILED = -1;
+    /** @var array<string, mixed> */
+    private array $loginInfo = [];
 
-    const BY_POST = 'WITH_PWD';
-    const BY_REMEMBER = 'REMEMBER';
-    const BY_FORCED = 'FORCED';
+    private UserProviderInterface $userProvider;
+
+    private AuthSessionStoreInterface $sessionStore;
+
+    private array $localSession = [];
+
+    private array $sessionRef;
+
+    private ?RememberMeInterface $rememberMe = null;
+
+    private RememberCookie $rememberCookie;
+
+    private string|int|null $loginId = null;
+    
+    private bool $regenerateSessionOnLogin = true;
+
+    private ?object $currentUser = null;
+
+    private ?int $absoluteTimeout = null;
+
+    private ?int $activityTimeout = null;
 
     /**
-     * @var int
+     * @param array|null $session session bucket (by ref); null uses $_SESSION when active else an internal array
      */
-    private $status;
+    public function __construct(
+        UserProviderInterface $userProvider,
+        ?array                 &$session = null,
+    ) {
+        $this->userProvider = $userProvider;
+        $this->rememberCookie = RememberCookie::forBrowser();
+        $this->bindSession($session);
+    }
 
     /**
-     * @var array
+     * Advanced: supply a custom session store (e.g., tests). Replaces array-based store.
      */
-    private $loginInfo;
+    public function setAuthSessionStore(AuthSessionStoreInterface $store): void
+    {
+        $this->sessionStore = $store;
+    }
 
     /**
-     * @var UserProviderInterface
-     */
-    private $userProvider;
-
-    /**
-     * @var array
-     */
-    private $session = null;
-
-    /**
-     * @var RememberMeInterface
-     */
-    private $rememberMe;
-
-    /**
-     * @var RememberCookie
-     */
-    private $rememberCookie;
-
-    /**
-     * @var string|int
-     */
-    private $loginId;
-
-    /**
-     * @var mixed
-     */
-    private $loginUser;
-
-    // +----------------------------------------------------------------------+
-    //  get the state of the auth
-    // +----------------------------------------------------------------------+
-    /**
-     * @param UserProviderInterface $userProvider
      * @param array|null $session
      */
-    public function __construct(UserProviderInterface $userProvider, &$session = null)
+    public function setSession(?array &$session = null): void
     {
-        $this->userProvider = $userProvider;
-        $this->status = self::AUTH_NONE;
-        $this->loginInfo = array();
-
-        $this->setSession($session);
+        $this->bindSession($session);
     }
 
     /**
-     * set up remember-me option.
-     *
-     * @param RememberMeInterface $rememberMe
-     * @param null $cookie
+     * @param array|null $session
      */
-    public function setRememberMe(RememberMeInterface $rememberMe, $cookie = null)
-    {
-        $this->rememberMe = $rememberMe;
-        $this->rememberCookie = $cookie ?: new RememberCookie();
-    }
-
-    /**
-     * @param null|array $session
-     */
-    public function setSession(&$session = null)
+    private function bindSession(?array&$session): void
     {
         if ($session === null) {
             if (session_status() === PHP_SESSION_ACTIVE) {
-                $this->session = &$_SESSION;
+                $this->sessionRef = &$_SESSION;
             } else {
-                $this->session = [];
+                $this->sessionRef = &$this->localSession;
             }
-            return;
+        } else {
+            $this->sessionRef = &$session;
         }
-        $this->session = &$session;
+        $this->sessionStore = new ArrayAuthSessionStore(
+            $this->sessionRef,
+            self::KEY,
+            $this->userProvider->getProviderKey(),
+        );
     }
 
     /**
-     * @return array
+     * Remember-me を有効化する（トークン保存 + クッキー）。本番ではここで DI／ファクトリから渡す想定。
+     *
+     * @param positive-int|null $rememberCookieLifetimeDays `$cookie` が null のとき `RememberCookie::forBrowser($days)` を使う（両方 null ならクッキー設定は据え置き）
      */
-    private function getSessionData()
-    {
-        $saveId = $this->getSaveId();
-        if (array_key_exists(self::KEY, $this->session) && array_key_exists($saveId, $this->session[self::KEY])) {
-            return $this->session[self::KEY][$saveId];
+    public function setRememberMe(
+        ?RememberMeInterface $rememberMe,
+        ?RememberCookie $cookie = null,
+        ?int $rememberCookieLifetimeDays = null,
+    ): void {
+        $this->rememberMe = $rememberMe;
+        if ($cookie !== null) {
+            $this->rememberCookie = $cookie;
+        } elseif ($rememberCookieLifetimeDays !== null) {
+            $this->rememberCookie = RememberCookie::forBrowser($rememberCookieLifetimeDays);
         }
-        return [];
     }
 
     /**
-     * @param array $save
+     * Set whether to regenerate session id on successful login (to prevent session fixation).
+     *
+     * @param bool $regenerate
      */
-    private function setSessionData(array $save)
+    public function setRegenerateSessionOnLogin(bool $regenerate): void
     {
-        $saveId = $this->getSaveId();
-        $this->session[self::KEY][$saveId] = $save;
+        $this->regenerateSessionOnLogin = $regenerate;
     }
 
     /**
-     * @return bool
+     * Set the absolute timeout in seconds.
+     * The session will be invalidated after this duration since the initial login.
+     *
+     * @param int|null $seconds
      */
-    public function isLogin()
+    public function setAbsoluteTimeout(?int $seconds): void
     {
-        if ($this->status === self::AUTH_OK) {
-            return true;
+        $this->absoluteTimeout = $seconds;
+    }
+
+    /**
+     * Set the activity timeout in seconds.
+     * The session will be invalidated if there is no activity for this duration.
+     *
+     * @param int|null $seconds
+     */
+    public function setActivityTimeout(?int $seconds): void
+    {
+        $this->activityTimeout = $seconds;
+    }
+
+    public function login(Identity $identity): bool
+    {
+        $user = $this->userProvider->findByIdentity($identity);
+        if ($user === null) {
+            return false;
         }
-        if ($this->checkSession()) {
-            return true;
+        if ($this->regenerateSessionOnLogin && session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+        }
+        $this->applySuccessfulLogin($user, $identity->kind);
+        if ($identity->options['remember'] ?? false) {
+            $this->persistRemember($this->loginId);
+        }
+
+        return true;
+    }
+
+    public function loginWithPassword(string $loginId, string $password, bool $remember = false): bool
+    {
+        $options = $remember ? ['remember' => true] : [];
+
+        return $this->login(Identity::newPassword($loginId, $password, $options));
+    }
+
+    public function forceLogin(string $loginId): bool
+    {
+        return $this->login(Identity::newForceLogin($loginId));
+    }
+
+    /**
+     * Currently logged-in user (resolved from memory, session, or remember-me).
+     */
+    public function user(): ?object
+    {
+        if ($this->restoreFromSession()) {
+            return $this->currentUser;
+        }
+        if ($this->currentUser !== null) {
+            return $this->currentUser;
         }
         if ($this->checkRemembered()) {
-            return true;
+            return $this->currentUser;
         }
-        return false;
+
+        return null;
     }
 
-    /**
-     * @param string $by
-     * @return bool
-     */
-    public function isLoginBy(string $by)
+    public function isLogin(): bool
+    {
+        return $this->user() !== null;
+    }
+
+    public function isLoginBy(AuthKind $kind): bool
     {
         if (!$this->isLogin()) {
             return false;
         }
-        return $by == $this->loginInfo['loginBy'];
+        $current = $this->loginInfo['kind'] ?? null;
+
+        return $current instanceof AuthKind && $current === $kind;
     }
 
-    /**
-     * @return UserProviderInterface
-     */
-    public function getUserProvider()
+    public function getUserProvider(): UserProviderInterface
     {
         return $this->userProvider;
     }
 
-    /**
-     * @return string|int
-     */
-    public function getLoginId()
+    public function getLoginId(): string|int|null
     {
         return $this->loginId;
     }
 
     /**
-     * @return mixed
+     * @return array<string, mixed> Includes `kind` ({@see AuthKind}), `loginId`, `type` (provider key), `time`.
      */
-    public function getLoginUser()
-    {
-        return $this->loginUser;
-    }
-
-    /**
-     * @return array
-     */
-    public function getLoginInfo()
+    public function getLoginInfo(): array
     {
         return $this->loginInfo;
     }
 
-    /**
-     * logout if logged in.
-     */
-    public function logout()
+    public function logout(): void
     {
+        if ($this->loginId && $this->rememberMe) {
+            $this->rememberMe->removeToken($this->loginId);
+        }
+        $this->rememberCookie?->clear();
         $this->loginId = null;
-        $this->loginUser = null;
-        $this->status = self::AUTH_NONE;
-        $this->loginInfo = array();
-        $this->setSessionData([]);
+        $this->currentUser = null;
+        $this->loginInfo = [];
+        $this->sessionStore->clear();
     }
 
-    // +----------------------------------------------------------------------+
-    //  authorization
-    // +----------------------------------------------------------------------+
-    /**
-     * login with id and pw to be validated with userInterface.
-     *
-     * @param string $loginId
-     * @param string $password
-     * @param bool $remember
-     * @return bool
-     */
-    public function login(string $loginId, string $password, $remember = false)
+    private function applySuccessfulLogin(object $user, AuthKind $kind): void
     {
-        if (!$this->loginUser = $this->userProvider->getUserByIdAndPw($loginId, $password)) {
-            $this->status = self::AUTH_FAILED;
+        $this->currentUser = $user;
+        $this->loginId = $this->userProvider->getUserId($user);
+        $time = date('Y-m-d H:i:s');
+        $now = time();
+        $payload = [
+            'userId' => $this->loginId,
+            'providerKey' => $this->userProvider->getProviderKey(),
+            'loginKind' => $kind->name,
+            'time' => $time,
+            'lastActivity' => $now,
+        ];
+        $this->sessionStore->write($payload);
+        $this->loginInfo = $this->buildLoginInfo($this->loginId, $kind, $time);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildLoginInfo(string|int $loginId, AuthKind $kind, string $time): array
+    {
+        return [
+            'loginId' => $loginId,
+            'kind' => $kind,
+            'type' => $this->userProvider->getProviderKey(),
+            'time' => $time,
+        ];
+    }
+
+    private function restoreFromSession(): bool
+    {
+        $payload = $this->sessionStore->read();
+        if ($payload === null) {
             return false;
         }
-        $this->createSessionData($loginId, self::BY_POST);
-        if ($remember) {
-            $this->rememberMe($loginId, null);
+        if (($payload['providerKey'] ?? '') !== $this->userProvider->getProviderKey()) {
+            return false;
         }
+
+        // Check timeouts
+        $now = time();
+        if ($this->absoluteTimeout !== null) {
+            $loginTimeStr = $payload['time'] ?? null;
+            if ($loginTimeStr) {
+                $loginTime = strtotime($loginTimeStr);
+                if ($now - $loginTime > $this->absoluteTimeout) {
+                    $this->logout();
+                    return false;
+                }
+            }
+        }
+        if ($this->activityTimeout !== null) {
+            $lastActivity = $payload['lastActivity'] ?? null;
+            if ($lastActivity && ($now - $lastActivity > $this->activityTimeout)) {
+                $this->logout();
+                return false;
+            }
+        }
+
+        $userId = $payload['userId'] ?? null;
+        if ($userId === null) {
+            return false;
+        }
+        $user = $this->userProvider->findById($userId);
+        if ($user === null) {
+            $this->sessionStore->clear();
+
+            return false;
+        }
+
+        // Update last activity
+        $payload['lastActivity'] = $now;
+        $this->sessionStore->write($payload);
+
+        $kind = $this->parseLoginKindFromPayload($payload);
+        $this->currentUser = $user;
+        $this->loginId = $userId;
+        $this->loginInfo = $this->buildLoginInfo(
+            $userId,
+            $kind,
+            $payload['time'] ?? date('Y-m-d H:i:s'),
+        );
+
         return true;
     }
 
     /**
-     * @param string $loginId
-     * @return bool
+     * @param array<string, mixed> $payload
      */
-    public function forceLogin(string $loginId)
+    private function parseLoginKindFromPayload(array $payload): AuthKind
     {
-        if ($this->loginUser = $this->userProvider->getUserById($loginId)) {
-            return $this->createSessionData($loginId, self::BY_FORCED);
+        $name = $payload['loginKind'] ?? '';
+        foreach (AuthKind::cases() as $case) {
+            if ($case->name === $name) {
+                return $case;
+            }
         }
-        return false;
+
+        return AuthKind::Password;
     }
 
-    /**
-     * @return bool
-     */
-    private function checkRemembered()
+    private function checkRemembered(): bool
     {
-        if (!$this->rememberMe) {
+        if ($this->rememberMe === null) {
             return false;
         }
-        if (!$loginId = $this->rememberCookie->retrieveId()) {
+        $loginId = $this->rememberCookie->retrieveId();
+        if ($loginId === null || $loginId === '') {
             return false;
         }
-        if (!$token = $this->rememberCookie->retrieveToken()) {
+        $token = $this->rememberCookie->retrieveToken();
+        if ($token === null || $token === '') {
             return false;
         }
         if (!$this->rememberMe->verifyRemember($loginId, $token)) {
             return false;
         }
-        if (!$this->loginUser = $this->userProvider->getUserById($loginId)) {
+        $user = $this->userProvider->findById($loginId);
+        if ($user === null) {
             return false;
         }
-
-        $this->createSessionData($loginId, self::BY_REMEMBER);
-        $this->rememberMe($loginId, $token);
-        return true;
-    }
-
-    /**
-     * @return bool
-     */
-    private function checkSession()
-    {
-        $session = $this->getSessionData();
-        if (!$session) {
-            return false;
-        }
-        if (!isset($session['type'])) {
-            return false;
-        }
-        if ($session['type'] !== $this->userProvider->getUserType()) {
-            return false;
-        }
-        $this->loginId = $session['loginId'];
-        if ($this->loginUser = $this->userProvider->getUserById($this->loginId)) {
-            return $this->createSessionData($this->loginId, $session['loginBy']);
-        }
-        return false;
-    }
-
-    // +----------------------------------------------------------------------+
-    //  internal stuff
-    // +----------------------------------------------------------------------+
-    /**
-     * @return mixed
-     */
-    private function getSaveId()
-    {
-        return 'Type:' . $this->userProvider->getUserType();
-    }
-
-    /**
-     * @param string $loginId
-     * @param string $loginBy
-     * @return bool
-     */
-    private function createSessionData(string $loginId, string $loginBy)
-    {
-        $this->loginId = $loginId;
-        $this->status = self::AUTH_OK;
-        $save = [
-            'loginId' => $loginId,
-            'time' => date('Y-m-d H:i:s'),
-            'loginBy' => $loginBy,
-            'type' => $this->userProvider->getUserType(),
+        $this->currentUser = $user;
+        $this->loginId = $this->userProvider->getUserId($user);
+        $time = date('Y-m-d H:i:s');
+        $kind = AuthKind::Remember;
+        $payload = [
+            'userId' => $this->loginId,
+            'providerKey' => $this->userProvider->getProviderKey(),
+            'loginKind' => $kind->name,
+            'time' => $time,
         ];
-        $this->loginInfo = $save;
-        $this->setSessionData($save);
+        $this->sessionStore->write($payload);
+        $this->loginInfo = $this->buildLoginInfo($this->loginId, $kind, $time);
+        $this->persistRemember($this->loginId, $token);
+
         return true;
     }
 
-    /**
-     * @param string $id
-     * @param string|null $token
-     */
-    private function rememberMe(string $id, ?string $token)
+    private function persistRemember(string|int|null $loginId, ?string $existingToken = null): void
     {
-        if (!$this->rememberMe) {
+        if ($this->rememberMe === null || $loginId === null) {
             return;
         }
-        $token = $this->rememberMe->generateToken($id, $token);
-        if ($token) {
-            $this->rememberCookie->save($id, $token);
+        $token = $this->rememberMe->generateToken($loginId, $existingToken);
+        if ($token !== false && $token !== null && $token !== '') {
+            $this->rememberCookie->save((string) $loginId, (string) $token);
         }
     }
-
-    // +----------------------------------------------------------------------+
 }

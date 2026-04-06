@@ -1,18 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace tests\Auth\mocks;
 
 use WScore\Auth\UserAdaptor\UserList;
 
 class SimpleUserList extends UserList
 {
-    /**
-     * returns user type token string to identify the
-     * user when using multiple user object.
-     *
-     * @return string
-     */
-    public function getUserType()
+    public function getProviderKey(): string
     {
         return 'SimpleUserList';
     }
