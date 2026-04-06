@@ -24,7 +24,7 @@ class RememberCookie
      * @param ArrayAccess<string, mixed>|array<string, mixed>|null $cookie  Pass a bag for tests; null/omit uses $_COOKIE
      * @param positive-int $rememberDays
      */
-    public function __construct(array|ArrayAccess &$cookie = null, int $rememberDays = 7)
+    public function __construct(array|ArrayAccess|null &$cookie = null, int $rememberDays = 7)
     {
         $this->rememberDays = max(1, $rememberDays);
         if ($cookie) {
