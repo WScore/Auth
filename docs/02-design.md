@@ -51,13 +51,13 @@ readonly class Identity {
 **ユーザーの検索・資格情報の検証**と、**任意オブジェクトと永続化 ID の通訳**を担う。
 
 - `findByIdentity`: パスワードならハッシュ照合も **ここで行う**（専用 `CredentialValidator` クラスは必須にしない。共通処理は **Trait または小さな `final` ヘルパ**でサンプル提供可。薄いラッパに留め、アルゴリズム・移行はアプリで差し替え可能にする）。
-- `getUserId` / `findById`: セッション等に載せる ID とユーザーオブジェクトの変換。
+- `getUserId` / `findByUserId`: セッション等に載せる ID とユーザーオブジェクトの変換。
 
 ```php
 interface UserProviderInterface {
     public function findByIdentity(Identity $identity): ?object;
     public function getUserId(object $user): string|int;
-    public function findById(string|int $userId): ?object;
+    public function findByUserId(string|int $userId): ?object;
 }
 ```
 

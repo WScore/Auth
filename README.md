@@ -116,7 +116,7 @@ Implement `WScore\Auth\Contracts\UserProviderInterface`:
 
 * `findByIdentity(Identity $identity): ?object` — resolve and verify credentials.
 * `getUserId(object $user): string|int` — id stored in session.
-* `findById(string|int $userId): ?object` — restore user from that id.
+* `findByUserId(string|int $userId): ?object` — restore user from that id.
 * `getProviderKey(): string` — session segment key (namespaces `Auth::KEY`).
 
 ## Remember-Me Option

@@ -86,7 +86,7 @@ class UserList implements UserProviderInterface
         return $user->id;
     }
 
-    public function findById(string|int $userId): ?object
+    public function findByUserId(string|int $userId): ?object
     {
         if (!$this->hasKey($userId)) {
             return null;

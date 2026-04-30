@@ -116,7 +116,7 @@ $auth->isLoginBy(AuthKind::ForceLogin);
 
 * `findByIdentity(Identity $identity): ?object` — 資格情報の解決と検証。
 * `getUserId(object $user): string|int` — セッションに保存する ID。
-* `findById(string|int $userId): ?object` — その ID からユーザーを復元。
+* `findByUserId(string|int $userId): ?object` — その ID からユーザーを復元。
 * `getProviderKey(): string` — セッションのセグメントキー（`Auth::KEY` 配下を名前空間化）。
 
 ## Remember-Me オプション

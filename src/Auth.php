@@ -294,7 +294,7 @@ class Auth
         if ($userId === null) {
             return false;
         }
-        $user = $this->userProvider->findById($userId);
+        $user = $this->userProvider->findByUserId($userId);
         if ($user === null) {
             $this->sessionStore->clear();
 
@@ -348,7 +348,7 @@ class Auth
         if (!$this->rememberMe->verifyRemember($loginId, $token)) {
             return false;
         }
-        $user = $this->userProvider->findById($loginId);
+        $user = $this->userProvider->findByUserId($loginId);
         if ($user === null) {
             return false;
         }

@@ -58,7 +58,7 @@ interface UserProviderInterface {
     public function getUserId(object $user): string|int;
 
     /** セッションIDからユーザーオブジェクトを復元する */
-    public function findById(string|int $userId): ?object;
+    public function findByUserId(string|int $userId): ?object;
 }
 ```
 
