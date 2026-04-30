@@ -32,7 +32,7 @@ composer require "wscore/auth:^2.0"
 
 ```php
 $auth = new Auth($userProvider);
-$auth->setSession($session); // optional; default is active `$_SESSION` or an internal array
+$auth->setSession($session); // optional; 未指定の場合は有効な `$_SESSION` を使う
 ```
 
 パスワードログイン（簡易 API）:

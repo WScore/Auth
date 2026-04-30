@@ -34,8 +34,7 @@ class Auth_Test extends TestCase
         ];
         $this->user = new SimpleUserList($this->idList);
         $this->user_save_id = $this->user->getProviderKey();
-        $this->auth = new Auth($this->user);
-        $this->auth->setSession($this->session);
+        $this->auth = new Auth($this->user, $this->session);
     }
 
     public function test0(): void
@@ -145,8 +144,7 @@ class Auth_Test extends TestCase
                 ],
             ],
         ];
-        $auth = new Auth($this->user);
-        $auth->setSession($session);
+        $auth = new Auth($this->user, $session);
 
         $authOK = $auth->isLogin();
 

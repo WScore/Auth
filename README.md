@@ -32,7 +32,7 @@ Getting Started
 
 ```php
 $auth = new Auth($userProvider);
-$auth->setSession($session); // optional; default is active `$_SESSION` or an internal array
+$auth->setSession($session); // optional; if not set, active `$_SESSION` is used
 ```
 
 Password login (convenience):

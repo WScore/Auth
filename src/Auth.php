@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WScore\Auth;
 
+use RuntimeException;
 use WScore\Auth\Contracts\AuthSessionStoreInterface;
 use WScore\Auth\Contracts\RememberMeInterface;
 use WScore\Auth\Contracts\UserProviderInterface;
@@ -21,8 +22,6 @@ class Auth
 
     private AuthSessionStoreInterface $sessionStore;
 
-    private array $localSession = [];
-
     private ?RememberMeInterface $rememberMe = null;
 
     private RememberCookie $rememberCookie;
@@ -38,7 +37,7 @@ class Auth
     private ?int $activityTimeout = null;
 
     /**
-     * @param array|null $session session bucket (by ref); null uses $_SESSION when active else an internal array
+     * @param array|null $session session bucket (by ref); null uses $_SESSION when active
      */
     public function __construct(
         UserProviderInterface $userProvider,
@@ -75,7 +74,9 @@ class Auth
             if (session_status() === PHP_SESSION_ACTIVE) {
                 $root = &$_SESSION;
             } else {
-                $root = &$this->localSession;
+                throw new RuntimeException(
+                    'Session is not active. Pass a session array by reference to Auth constructor or call setSession().'
+                );
             }
         } else {
             $root = &$session;
