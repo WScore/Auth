@@ -10,7 +10,8 @@ use WScore\Auth\Contracts\UserProviderInterface;
 use WScore\Auth\Identity;
 
 /**
- * Sample in-memory user list: id => plain password string. User object is stdClass with id + secret.
+ * Sample in-memory user list: id => secret string.
+ * Default behavior expects secret is plain password, but subclasses can override verification.
  */
 class UserList implements UserProviderInterface
 {
@@ -36,7 +37,7 @@ class UserList implements UserProviderInterface
         };
     }
 
-    private function findByPassword(Identity $identity): ?object
+    protected function findByPassword(Identity $identity): ?object
     {
         $login = $identity->credentials[Identity::CREDENTIAL_LOGIN] ?? null;
         $password = $identity->credentials[Identity::CREDENTIAL_PASSWORD] ?? null;
@@ -49,14 +50,14 @@ class UserList implements UserProviderInterface
         if (!$this->hasKey($login)) {
             return null;
         }
-        if ($this->getSecret($login) !== $password) {
+        if (!$this->verifyPassword($login, $password)) {
             return null;
         }
 
         return $this->makeUser($login);
     }
 
-    private function findByForceLogin(Identity $identity): ?object
+    protected function findByForceLogin(Identity $identity): ?object
     {
         $userId = $identity->credentials[Identity::CREDENTIAL_FORCE_USER_ID] ?? null;
         if (!is_string($userId) && !is_int($userId)) {
@@ -67,6 +68,17 @@ class UserList implements UserProviderInterface
         }
 
         return $this->makeUser($userId);
+    }
+
+    /**
+     * Default verification is plain-text comparison.
+     * Subclasses can override to support hashed secrets etc.
+     *
+     * @param string|int $loginId
+     */
+    protected function verifyPassword(string|int $loginId, string $password): bool
+    {
+        return $this->getSecret($loginId) === $password;
     }
 
     public function getUserId(object $user): string|int
@@ -86,7 +98,7 @@ class UserList implements UserProviderInterface
     /**
      * @param string|int $id
      */
-    private function makeUser(string|int $id): object
+    protected function makeUser(string|int $id): object
     {
         return (object) [
             'id' => $id,
@@ -97,7 +109,7 @@ class UserList implements UserProviderInterface
     /**
      * @param string|int $id
      */
-    private function getSecret(string|int $id): string
+    protected function getSecret(string|int $id): string
     {
         return $this->idList[$id];
     }
@@ -105,7 +117,7 @@ class UserList implements UserProviderInterface
     /**
      * @param string|int $key
      */
-    private function hasKey(string|int $key): bool
+    protected function hasKey(string|int $key): bool
     {
         $list = $this->idList;
         if ($list instanceof ArrayAccess) {
