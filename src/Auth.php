@@ -23,8 +23,6 @@ class Auth
 
     private array $localSession = [];
 
-    private array $sessionRef;
-
     private ?RememberMeInterface $rememberMe = null;
 
     private RememberCookie $rememberCookie;
@@ -72,17 +70,18 @@ class Auth
      */
     private function bindSession(?array&$session): void
     {
+        /** @var array $root */
         if ($session === null) {
             if (session_status() === PHP_SESSION_ACTIVE) {
-                $this->sessionRef = &$_SESSION;
+                $root = &$_SESSION;
             } else {
-                $this->sessionRef = &$this->localSession;
+                $root = &$this->localSession;
             }
         } else {
-            $this->sessionRef = &$session;
+            $root = &$session;
         }
         $this->sessionStore = new ArrayAuthSessionStore(
-            $this->sessionRef,
+            $root,
             self::KEY,
             $this->userProvider->getProviderKey(),
         );
