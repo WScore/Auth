@@ -8,16 +8,27 @@ use PDO;
 use WScore\Auth\Contracts\RememberMeInterface;
 
 /**
- * PDO に remember トークンを保存するサンプル実装。
- * スキーマ・SQL・エラー処理はアプリに合わせて置き換える前提で、**そのまま本番推奨とはしない**。
+ * Sample implementation that stores remember-me tokens in a PDO-backed table.
+ *
+ * This is a reference implementation only. Replace schema/SQL/error handling for your application.
+ *
+ * Expected schema (example):
+ * - user_id (string/int)
+ * - token (string)
+ * - created_at (int; unix epoch seconds when the token was issued)
+ *
+ * Validity is checked as `time() <= created_at + $tokenLifetimeSeconds`, so changing
+ * `$tokenLifetimeSeconds` applies the new policy to existing rows (e.g. shortening
+ * lifetime immediately invalidates older tokens).
  */
 class RememberMePdoSample implements RememberMeInterface
 {
     /**
-     * @param PDO $pdo
+     * @param positive-int $tokenLifetimeSeconds current max age in seconds (rolling policy for verification)
      */
     public function __construct(
         private readonly PDO $pdo,
+        private readonly int $tokenLifetimeSeconds = 60 * 60 * 24 * 7,
     ) {
     }
 
@@ -48,11 +59,13 @@ class RememberMePdoSample implements RememberMeInterface
         $table = $this->table;
         $idCol = $this->id_name;
         $tokenCol = $this->token_name;
+        $createdCol = $this->created_at_name;
+        $createdAt = time();
         $stmt = $this->pdo->prepare(
-            "INSERT INTO {$table} ({$idCol}, {$tokenCol}) VALUES (?, ?)"
+            "INSERT INTO {$table} ({$idCol}, {$tokenCol}, {$createdCol}) VALUES (?, ?, ?)"
         );
 
-        return $stmt->execute([$id, $token]);
+        return $stmt->execute([$id, $token, $createdAt]);
     }
 
     private function getRemembered(int|string $id, string $token): ?array
@@ -60,12 +73,15 @@ class RememberMePdoSample implements RememberMeInterface
         $table = $this->table;
         $idCol = $this->id_name;
         $tokenCol = $this->token_name;
+        $createdCol = $this->created_at_name;
+        $now = time();
+        $lifetime = $this->tokenLifetimeSeconds;
         $stmt = $this->pdo->prepare(
-            "SELECT {$idCol} AS user_id, {$tokenCol} AS token
+            "SELECT {$idCol} AS user_id, {$tokenCol} AS token, {$createdCol} AS created_at
              FROM {$table}
-             WHERE {$idCol} = ? AND {$tokenCol} = ?"
+             WHERE {$idCol} = ? AND {$tokenCol} = ? AND ? <= {$createdCol} + ?"
         );
-        $stmt->execute([$id, $token]);
+        $stmt->execute([$id, $token, $now, $lifetime]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!is_array($row)) {
             return null;
@@ -83,12 +99,15 @@ class RememberMePdoSample implements RememberMeInterface
     /** @var non-empty-string */
     protected string $token_name = 'token';
 
+    /** @var non-empty-string */
+    protected string $created_at_name = 'created_at';
+
     public function removeToken(int|string $loginId): void
     {
         $table = $this->table;
         $idCol = $this->id_name;
         $stmt = $this->pdo->prepare(
-        "DELETE FROM {$table} WHERE {$idCol}"
+            "DELETE FROM {$table} WHERE {$idCol} = ?"
         );
         $stmt->execute([$loginId]);
     }
