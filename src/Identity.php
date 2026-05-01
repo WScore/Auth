@@ -5,27 +5,28 @@ declare(strict_types=1);
 namespace WScore\Auth;
 
 /**
- * `credentials` 配列のキー。{@see UserProviderInterface::findByIdentity} 実装と揃える。
+ * Keys for the `credentials` array. 
+ * Keep these aligned with {@see \WScore\Auth\Contracts\UserProviderInterface::findByIdentity} implementations.
  *
  * @phpstan-type Credentials array<string, mixed>
  * @phpstan-type Options array<string, mixed>
  */
 final readonly class Identity
 {
-    /** パスワードログイン時の識別子（メール・ログイン名・任意のログイン ID 等） */
+    /** Identifier for password login (email, username, or any login id your app uses). */
     public const CREDENTIAL_LOGIN = 'login';
 
     public const CREDENTIAL_PASSWORD = 'password';
 
-    /** ForceLogin 時の対象（内部 user_id 等、アプリの解釈に従う） */
+    /** Subject user for ForceLogin (e.g. internal `user_id`; meaning is app-defined). */
     public const CREDENTIAL_FORCE_USER_ID = 'user_id';
 
-    /** Social / OIDC でプロバイダが付与するユーザー固有情報の主キー */
+    /** Stable per-user key from the provider for social / OIDC sign-in. */
     public const CREDENTIAL_PROVIDER_USER_ID = 'provider_user_id';
 
     public const CREDENTIAL_ONE_TIME_TOKEN = 'token';
 
-    /** Remember-me 検証用（クッキー等に載せたユーザー側の識別子） */
+    /** Client-side user identifier for remember-me verification (e.g. from a cookie). */
     public const CREDENTIAL_REMEMBER_USER_ID = 'remember_user_id';
 
     public const CREDENTIAL_REMEMBER_TOKEN = 'remember_token';
@@ -61,11 +62,11 @@ final readonly class Identity
     }
 
     /**
-     * Social / OIDC でプロバイダが付与する **ユーザー固有情報の主キー**（OIDC の `sub`、各 API の `id` 等。
-     * ブリッジ側で生データから取り出し、ここへ文字列として渡す）。
+     * Stable **per-user key** from the provider (OIDC `sub`, vendor `id`, etc.).
+     * Your bridge layer should extract it from raw provider data and pass it here as a string.
      *
-     * @param Credentials $extraCredentials 例: email, name, avatar など（プロバイダ任せ）
-     * @param Options $options `provider` は第1引数とマージされ、左側が優先（上書き不可）
+     * @param Credentials $extraCredentials Optional fields (e.g. email, name, avatar); provider-specific.
+     * @param Options     $options          Merged with `['provider' => $provider]`; that entry wins and cannot be overridden.
      */
     public static function newOAuth(
         string $provider,
@@ -87,7 +88,7 @@ final readonly class Identity
     }
 
     /**
-     * Remember-me 検証用（クッキーのユーザー ID + トークンなど）。
+     * Remember-me verification (user id + token as stored in cookies or similar).
      *
      * @param Options $options
      */
