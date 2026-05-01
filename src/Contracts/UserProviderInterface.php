@@ -25,8 +25,6 @@ interface UserProviderInterface
 
     /**
      * Isolates session storage when multiple providers exist (segment key under {@see \WScore\Auth\Auth::KEY}).
-     *
-     * @return non-empty-string
      */
     public function getProviderKey(): string;
 }

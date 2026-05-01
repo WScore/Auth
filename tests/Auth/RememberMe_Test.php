@@ -61,7 +61,7 @@ class RememberMe_Test extends TestCase
         $this->cookie = new RememberCookie($this->cookie_data);
         $this->cookie->setSetCookie([$this, 'setCookie']);
 
-        $this->auth = new Auth($this->user, $this->session);
+        $this->auth = new Auth($this->user, null, $this->session);
         $this->auth->setRememberMe($this->rememberMe, $this->cookie);
     }
 

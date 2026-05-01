@@ -32,7 +32,9 @@ Getting Started
 
 ```php
 $auth = new Auth($userProvider);
-$auth->setSession($session); // optional; if not set, active `$_SESSION` is used
+// optional: `new Auth($userProvider, $sessionStore)` for DI, or third arg for tests:
+// `new Auth($userProvider, null, $sessionByRef)`
+$auth->setSession($session); // optional; if not set, active `$_SESSION` is used when using the default array store
 ```
 
 Password login (convenience):
@@ -128,7 +130,7 @@ Do **not** pass remember-me dependencies into the `Auth` constructor. Configure 
 ```php
 use WScore\Auth\RememberAdaptor\RememberCookie;
 
-$auth = new Auth($userProvider, $session);
+$auth = new Auth($userProvider, null, $session);
 
 // Production: 30-day browser cookie (uses RememberCookie::forBrowser(30) internally)
 $auth->setRememberMe($rememberMe, null, 30);
@@ -147,7 +149,9 @@ $auth->setRememberMe($rememberMe, $cookie);
 
 ### Advanced
 
-`setAuthSessionStore(WScore\Auth\Contracts\AuthSessionStoreInterface $store)` — replace the default `ArrayAuthSessionStore` (e.g. integration tests or a non-array session backend).
+Constructor: `new Auth(UserProviderInterface $provider, ?AuthSessionStoreInterface $sessionStore = null, ?array &$session = null)`. When `$sessionStore` is null, an `ArrayAuthSessionStore` is built (PHP session or the passed `$session` array). When a store is injected, it is shared as usual; `read` / `write` / `clear` take a **segment key** (typically `UserProviderInterface::getProviderKey()`), so one implementation can serve multiple `Auth` instances.
+
+`setAuthSessionStore(AuthSessionStoreInterface $store)` — replace the session store after construction (e.g. tests).
 
 #### Session Regeneration
 

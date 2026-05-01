@@ -19,7 +19,7 @@ class HtpasswdUserList_Test extends TestCase
         $session = [];
         $htpasswd = $this->makeTempFile("plain:pw\n");
         $provider = UserPasswd::fromHtpasswd($htpasswd);
-        $auth = new Auth($provider, $session);
+        $auth = new Auth($provider, null, $session);
 
         $this->assertFalse($auth->loginWithPassword('plain', 'pw'));
     }
@@ -34,7 +34,7 @@ class HtpasswdUserList_Test extends TestCase
 
         $htpasswd = $this->makeTempFile("test:{$hash}\n");
         $provider = UserPasswd::fromHtpasswd($htpasswd);
-        $auth = new Auth($provider, $session);
+        $auth = new Auth($provider, null, $session);
 
         $this->assertTrue($auth->loginWithPassword('test', 'test-PW'));
         $this->assertSame('test', $auth->getLoginId());
@@ -47,7 +47,7 @@ class HtpasswdUserList_Test extends TestCase
         $hash = password_hash('test-PW', PASSWORD_BCRYPT);
         $htpasswd = $this->makeTempFile("test:{$hash}\n");
         $provider = UserPasswd::fromHtpasswd($htpasswd);
-        $auth = new Auth($provider, $session);
+        $auth = new Auth($provider, null, $session);
 
         $this->assertFalse($auth->loginWithPassword('test', 'wrong'));
     }
@@ -59,7 +59,7 @@ class HtpasswdUserList_Test extends TestCase
         $sha = base64_encode(sha1('pw', true));
         $htpasswd = $this->makeTempFile("alice:{SHA}{$sha}\n");
         $provider = UserPasswd::fromHtpasswd($htpasswd);
-        $auth = new Auth($provider, $session);
+        $auth = new Auth($provider, null, $session);
 
         $this->assertTrue($auth->loginWithPassword('alice', 'pw'));
     }
@@ -72,7 +72,7 @@ class HtpasswdUserList_Test extends TestCase
         $apr1 = '$apr1$salt$dIQSC7CZVMfwYUarWFsjy0';
         $htpasswd = $this->makeTempFile("md5user:{$apr1}\n");
         $provider = UserPasswd::fromHtpasswd($htpasswd);
-        $auth = new Auth($provider, $session);
+        $auth = new Auth($provider, null, $session);
 
         $this->assertTrue($auth->loginWithPassword('md5user', 'pw'));
     }
@@ -87,7 +87,7 @@ class HtpasswdUserList_Test extends TestCase
         $htaccess = $this->makeTempFile("AuthUserFile {$htpasswd}\n");
 
         $provider = UserPasswd::fromHtaccess($htaccess);
-        $auth = new Auth($provider, $session);
+        $auth = new Auth($provider, null, $session);
 
         $this->assertTrue($auth->loginWithPassword('bob', 'pw'));
     }

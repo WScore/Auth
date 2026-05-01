@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Breaking:** `UserProviderInterface` is replaced with `findByIdentity` / `getUserId` / `findByUserId` / `getProviderKey()` (`WScore\Auth\Contracts`).
 - **Breaking:** Login entry is `Identity` + `Auth::login()`; use `loginWithPassword()` / `forceLogin()` for common cases.
 - **Breaking:** Session persistence uses `AuthSessionStoreInterface` + `ArrayAuthSessionStore` (payload includes `userId`, `providerKey`, etc.).
+- **Breaking:** `AuthSessionStoreInterface::read` / `write` / `clear` take a **segment key** (`string`) so a single store instance can be shared across multiple `Auth` / providers.
+- **Breaking:** `ArrayAuthSessionStore` no longer takes the segment in its constructor; use `ArrayAuthSessionStore::forPhpSession($namespace)` when binding to active `$_SESSION`, or `new ArrayAuthSessionStore(&$root, $namespace)` for a test array.
+- **Breaking:** `Auth` constructor is `Auth(UserProviderInterface, ?AuthSessionStoreInterface $sessionStore = null, ?array &$session = null)`; the previous two-argument `Auth($provider, $session)` form becomes `Auth($provider, null, $session)`.
 - **Breaking:** PHP **8.2+** required.
 - Contracts live under `WScore\Auth\Contracts\` (e.g. `UserProviderInterface`, `RememberMeInterface`, `AuthSessionStoreInterface`).
 

@@ -32,7 +32,9 @@ composer require "wscore/auth:^2.0"
 
 ```php
 $auth = new Auth($userProvider);
-$auth->setSession($session); // optional; 未指定の場合は有効な `$_SESSION` を使う
+// 任意: `new Auth($userProvider, $sessionStore)` で DI、テストでは第3引数に配列参照:
+// `new Auth($userProvider, null, $sessionByRef)`
+$auth->setSession($session); // optional; 既定の配列ストア利用時、未指定なら有効な `$_SESSION`
 ```
 
 パスワードログイン（簡易 API）:
@@ -128,7 +130,7 @@ Remember 系は **`Auth` のコンストラクタでは渡さず**、必ず **`s
 ```php
 use WScore\Auth\RememberAdaptor\RememberCookie;
 
-$auth = new Auth($userProvider, $session);
+$auth = new Auth($userProvider, null, $session);
 
 // 本番: 30 日のブラウザ用クッキー（内部で RememberCookie::forBrowser(30)）
 $auth->setRememberMe($rememberMe, null, 30);
@@ -147,7 +149,9 @@ $auth->setRememberMe($rememberMe, $cookie);
 
 ### 上級
 
-`setAuthSessionStore(WScore\Auth\Contracts\AuthSessionStoreInterface $store)` — 既定の `ArrayAuthSessionStore` を差し替えます（統合テストや配列以外のセッション保存先など）。
+コンストラクタ: `new Auth(UserProviderInterface $provider, ?AuthSessionStoreInterface $sessionStore = null, ?array &$session = null)`。`$sessionStore` が null のとき `ArrayAuthSessionStore` を組み立てます（有効な PHP セッション、または渡した `$session`）。ストアを DI で共有する場合、`read` / `write` / `clear` は **セグメントキー**（通常は `getProviderKey()`）を毎回受け取るので、複数の `Auth` で同一実装を使えます。
+
+`setAuthSessionStore(AuthSessionStoreInterface $store)` — 構築後にストアを差し替えます（テストなど）。
 
 #### セッション ID の再生成
 

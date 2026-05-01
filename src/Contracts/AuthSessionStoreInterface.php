@@ -17,14 +17,25 @@ namespace WScore\Auth\Contracts;
 interface AuthSessionStoreInterface
 {
     /**
+     * Reads the session payload for the given provider key.
+     * 
+     * @param string $segmentKey Per-provider slot (e.g. {@see UserProviderInterface::getProviderKey()}).
      * @return array<string, mixed>|null
      */
-    public function read(): ?array;
+    public function read(string $segmentKey): ?array;
 
     /**
+     * Writes the session payload for the given provider key.
+     * 
+     * @param string               $segmentKey Per-provider slot (e.g. {@see UserProviderInterface::getProviderKey()}).
      * @param array<string, mixed> $payload
      */
-    public function write(array $payload): void;
+    public function write(string $segmentKey, array $payload): void;
 
-    public function clear(): void;
+    /**
+     * Clears the session payload for the given provider key.
+     * 
+     * @param string $segmentKey Per-provider slot (e.g. {@see UserProviderInterface::getProviderKey()}).
+     */
+    public function clear(string $segmentKey): void;
 }

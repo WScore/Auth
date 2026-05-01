@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace WScore\Auth;
 
-use RuntimeException;
 use WScore\Auth\Contracts\AuthSessionStoreInterface;
 use WScore\Auth\Contracts\RememberMeInterface;
 use WScore\Auth\Contracts\UserProviderInterface;
@@ -37,15 +36,22 @@ class Auth
     private ?int $activityTimeout = null;
 
     /**
-     * @param array|null $session session bucket (by ref); null uses $_SESSION when active
+     * @param UserProviderInterface          $userProvider UserProviderInterface implementation
+     * @param AuthSessionStoreInterface|null $sessionStore Injected store, or null for {@see ArrayAuthSessionStore}
+     * @param array|null                     $session      When `$sessionStore` is null: session bucket by reference, or null for active `$_SESSION`
      */
     public function __construct(
         UserProviderInterface $userProvider,
-        ?array                 &$session = null,
+        ?AuthSessionStoreInterface $sessionStore = null,
+        ?array &$session = null,
     ) {
         $this->userProvider = $userProvider;
         $this->rememberCookie = RememberCookie::forBrowser();
-        $this->bindSession($session);
+        if ($sessionStore !== null) {
+            $this->sessionStore = $sessionStore;
+        } else {
+            $this->installDefaultArrayStore($session);
+        }
     }
 
     /**
@@ -57,35 +63,30 @@ class Auth
     }
 
     /**
-     * @param array|null $session
+     * Rebind the default {@see ArrayAuthSessionStore} to another array or to active PHP session.
+     *
+     * @param array|null $session session bucket by reference, or null for active `$_SESSION`
      */
     public function setSession(?array &$session = null): void
     {
-        $this->bindSession($session);
+        $this->installDefaultArrayStore($session);
     }
 
     /**
      * @param array|null $session
      */
-    private function bindSession(?array&$session): void
+    private function installDefaultArrayStore(?array &$session): void
     {
-        /** @var array $root */
-        if ($session === null) {
-            if (session_status() === PHP_SESSION_ACTIVE) {
-                $root = &$_SESSION;
-            } else {
-                throw new RuntimeException(
-                    'Session is not active. Pass a session array by reference to Auth constructor or call setSession().'
-                );
-            }
+        if ($session !== null) {
+            $this->sessionStore = new ArrayAuthSessionStore($session, self::KEY);
         } else {
-            $root = &$session;
+            $this->sessionStore = ArrayAuthSessionStore::forPhpSession(self::KEY);
         }
-        $this->sessionStore = new ArrayAuthSessionStore(
-            $root,
-            self::KEY,
-            $this->userProvider->getProviderKey(),
-        );
+    }
+
+    private function sessionSegmentKey(): string
+    {
+        return $this->userProvider->getProviderKey();
     }
 
     /**
@@ -227,7 +228,7 @@ class Auth
         $this->loginId = null;
         $this->currentUser = null;
         $this->loginInfo = [];
-        $this->sessionStore->clear();
+        $this->sessionStore->clear($this->sessionSegmentKey());
     }
 
     private function applySuccessfulLogin(object $user, AuthKind $kind): void
@@ -243,7 +244,7 @@ class Auth
             'time' => $time,
             'lastActivity' => $now,
         ];
-        $this->sessionStore->write($payload);
+        $this->sessionStore->write($this->sessionSegmentKey(), $payload);
         $this->loginInfo = $this->buildLoginInfo($this->loginId, $kind, $time);
     }
 
@@ -262,7 +263,7 @@ class Auth
 
     private function restoreFromSession(): bool
     {
-        $payload = $this->sessionStore->read();
+        $payload = $this->sessionStore->read($this->sessionSegmentKey());
         if ($payload === null) {
             return false;
         }
@@ -296,14 +297,14 @@ class Auth
         }
         $user = $this->userProvider->findByUserId($userId);
         if ($user === null) {
-            $this->sessionStore->clear();
+            $this->sessionStore->clear($this->sessionSegmentKey());
 
             return false;
         }
 
         // Update last activity
         $payload['lastActivity'] = $now;
-        $this->sessionStore->write($payload);
+        $this->sessionStore->write($this->sessionSegmentKey(), $payload);
 
         $kind = $this->parseLoginKindFromPayload($payload);
         $this->currentUser = $user;
@@ -362,7 +363,7 @@ class Auth
             'loginKind' => $kind->name,
             'time' => $time,
         ];
-        $this->sessionStore->write($payload);
+        $this->sessionStore->write($this->sessionSegmentKey(), $payload);
         $this->loginInfo = $this->buildLoginInfo($this->loginId, $kind, $time);
         $this->persistRemember($this->loginId, $token);
 

@@ -23,7 +23,7 @@ class Timeout_Test extends TestCase
     {
         $idList = new ArrayObject(['test' => 'test-PW']);
         $this->user = new SimpleUserList($idList);
-        $this->auth = new Auth($this->user, $this->session);
+        $this->auth = new Auth($this->user, null, $this->session);
     }
 
     #[Test]
